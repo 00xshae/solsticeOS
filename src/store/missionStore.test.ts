@@ -8,7 +8,8 @@ import {
   selectConjunctionsBySeverity,
   selectDisplayTimeMs,
   selectEffectiveEnvelope,
-  selectFilteredObjects,
+  selectSearchResults,
+  selectTrackedObjects,
   selectSequenceFeasibility,
   selectSeverity,
   useMissionStore,
@@ -34,14 +35,38 @@ describe('mission clock', () => {
 })
 
 describe('catalog', () => {
-  it('filters by segment and searches name, COSPAR and NORAD', () => {
-    state().setSegmentFilter('IND')
-    expect(selectFilteredObjects(state()).every((o) => o.segment === 'IND')).toBe(true)
-    state().setSegmentFilter('ALL')
+  it('returns no search results until something is typed', () => {
+    expect(selectSearchResults(state())).toEqual([])
+    state().setSearchQuery('   ')
+    expect(selectSearchResults(state())).toEqual([])
+  })
+
+  it('searches name, COSPAR and NORAD', () => {
     state().setSearchQuery('sl-16')
-    expect(selectFilteredObjects(state()).map((o) => o.id)).toEqual(['SL16-RB'])
+    expect(selectSearchResults(state()).map((o) => o.id)).toEqual(['SL16-RB'])
     state().setSearchQuery('41877')
-    expect(selectFilteredObjects(state()).map((o) => o.id)).toEqual(['RSAT-2A'])
+    expect(selectSearchResults(state()).map((o) => o.id)).toEqual(['RSAT-2A'])
+  })
+
+  it('starts with nothing tracked and tracks each object once, in the order added', () => {
+    expect(state().trackedIds).toEqual([])
+    state().trackRso('SL16-RB')
+    state().trackRso('RSAT-2A')
+    state().trackRso('SL16-RB')
+    state().trackRso('NOT-A-REAL-ID')
+    expect(selectTrackedObjects(state()).map((o) => o.id)).toEqual(['SL16-RB', 'RSAT-2A'])
+  })
+
+  it('tracks an object when it is selected, and keeps it when deselected', () => {
+    state().selectRso('RSAT-2A')
+    state().selectRso(null)
+    expect(state().trackedIds).toEqual(['RSAT-2A'])
+  })
+
+  it('clears the selection when the selected object is untracked', () => {
+    state().selectRso('RSAT-2A')
+    state().untrackRso('RSAT-2A')
+    expect(state()).toMatchObject({ trackedIds: [], selectedRsoId: null })
   })
 
   it('reports list categories for an object', () => {
@@ -54,6 +79,18 @@ describe('conjunction selection', () => {
   it('selects the primary and defaults to the first course of action', () => {
     state().selectConjunction('CJ-001')
     expect(state()).toMatchObject({ selectedRsoId: 'RSAT-2A', activeSequenceId: 'SEQ-001-A', colaStatus: 'PLANNING' })
+  })
+
+  it('tracks both objects of the opened conjunction', () => {
+    state().trackRso('SL16-RB')
+    state().selectConjunction('CJ-001')
+    expect(state().trackedIds).toEqual(['SL16-RB', 'RSAT-2A'])
+  })
+
+  it('closes the conjunction when either of its objects is untracked', () => {
+    state().selectConjunction('CJ-001')
+    state().untrackRso('SL16-RB')
+    expect(state()).toMatchObject({ activeConjunctionId: null, activeSequenceId: null, selectedRsoId: 'RSAT-2A' })
   })
 
   it('ignores sequences that belong to another conjunction', () => {

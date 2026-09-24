@@ -7,7 +7,6 @@ import { create } from 'zustand'
 import { conjunctionById, conjunctions, DEMO_EPOCH_MS, rsoById, rsoLists, rsoObjects, sequenceById } from '@/data'
 import { aggregateSeverity, computeSeverity } from '@/lib/severity'
 import type {
-  CatalogSegment,
   ConjunctionEvent,
   ManeuverEnvelope,
   ManeuverSequence,
@@ -17,7 +16,6 @@ import type {
 } from '@/types'
 
 export type SpeedMultiplier = 1 | 10 | 60
-export type SegmentFilter = CatalogSegment | 'ALL'
 export type ColaStatus = 'PLANNING' | 'COMMITTED'
 
 export interface MissionState {
@@ -25,8 +23,9 @@ export interface MissionState {
   playing: boolean
   speed: SpeedMultiplier
 
-  segmentFilter: SegmentFilter
   searchQuery: string
+  /** Objects the analyst has added from search: listed in the sidebar and drawn on the globe. */
+  trackedIds: string[]
   selectedRsoId: string | null
 
   activeConjunctionId: string | null
@@ -51,8 +50,9 @@ export interface MissionActions {
   togglePlaying: () => void
   setSpeed: (speed: SpeedMultiplier) => void
 
-  setSegmentFilter: (filter: SegmentFilter) => void
   setSearchQuery: (query: string) => void
+  trackRso: (id: string) => void
+  untrackRso: (id: string) => void
   selectRso: (id: string | null) => void
 
   selectConjunction: (id: string | null) => void
@@ -75,8 +75,8 @@ export const initialMissionState: MissionState = {
   simTimeMs: DEMO_EPOCH_MS,
   playing: true,
   speed: 1,
-  segmentFilter: 'ALL',
   searchQuery: '',
+  trackedIds: [],
   selectedRsoId: null,
   activeConjunctionId: null,
   activeSequenceId: null,
@@ -88,6 +88,8 @@ export const initialMissionState: MissionState = {
   committedAtMs: null,
   complianceOpen: false,
 }
+
+const withTracked = (ids: string[], id: string) => (ids.includes(id) || !rsoById.has(id) ? ids : [...ids, id])
 
 const sequenceBounds = (sequence: ManeuverSequence): [number, number] => [
   Date.parse(sequence.steps[0].start),
@@ -104,9 +106,27 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
   setSpeed: (speed) => set({ speed }),
 
-  setSegmentFilter: (segmentFilter) => set({ segmentFilter }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
-  selectRso: (selectedRsoId) => set({ selectedRsoId }),
+  trackRso: (id) => set((s) => ({ trackedIds: withTracked(s.trackedIds, id) })),
+  untrackRso: (id) =>
+    set((s) => {
+      const conj = selectActiveConjunction(s)
+      // Dropping either object of the open conjunction closes it: the globe can no longer show the pair.
+      const closesConjunction = conj !== null && (conj.primaryId === id || conj.secondaryId === id)
+      return {
+        trackedIds: s.trackedIds.filter((t) => t !== id),
+        ...(s.selectedRsoId === id && { selectedRsoId: null }),
+        ...(closesConjunction && {
+          activeConjunctionId: null,
+          activeSequenceId: null,
+          scrubTimeMs: null,
+          colaStatus: 'PLANNING' as const,
+          committedAtMs: null,
+        }),
+      }
+    }),
+  // Selecting an object always puts it on the globe.
+  selectRso: (id) => set((s) => ({ selectedRsoId: id, ...(id && { trackedIds: withTracked(s.trackedIds, id) }) })),
 
   selectConjunction: (id) => {
     const event = id ? conjunctionById.get(id) : undefined
@@ -117,7 +137,11 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
       scrubTimeMs: null,
       colaStatus: 'PLANNING',
       committedAtMs: null,
-      ...(event && { selectedRsoId: event.primaryId }),
+      ...(event && {
+        selectedRsoId: event.primaryId,
+        // Opening a conjunction puts both objects on the globe.
+        trackedIds: withTracked(withTracked(get().trackedIds, event.primaryId), event.secondaryId),
+      }),
     })
   },
   selectSequence: (id) => {
@@ -168,16 +192,20 @@ export const selectActiveConjunction = (s: MissionState): ConjunctionEvent | nul
 export const selectActiveSequence = (s: MissionState): ManeuverSequence | null =>
   (s.activeSequenceId && sequenceById.get(s.activeSequenceId)) || null
 
-export function selectFilteredObjects(s: MissionState): RSOObject[] {
+/** Catalog matches for the search box; nothing until the analyst types. */
+export function selectSearchResults(s: MissionState): RSOObject[] {
   const query = s.searchQuery.trim().toLowerCase()
+  if (!query) return []
   return rsoObjects.filter(
     (o) =>
-      (s.segmentFilter === 'ALL' || o.segment === s.segmentFilter) &&
-      (!query ||
-        o.name.toLowerCase().includes(query) ||
-        o.cosparId.toLowerCase().includes(query) ||
-        String(o.noradId).includes(query)),
+      o.name.toLowerCase().includes(query) ||
+      o.cosparId.toLowerCase().includes(query) ||
+      String(o.noradId).includes(query),
   )
+}
+
+export function selectTrackedObjects(s: MissionState): RSOObject[] {
+  return s.trackedIds.flatMap((id) => rsoById.get(id) ?? [])
 }
 
 const categoriesById = new Map<string, Set<RsoListCategory>>()
