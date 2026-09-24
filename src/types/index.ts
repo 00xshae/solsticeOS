@@ -97,7 +97,7 @@ export interface ConjunctionEvent {
   /** Uncooperative object. */
   secondaryId: string
   tca: IsoUtc
-  /** Screening window during which the pair is inside the screening volume. */
+  /** Decision window: from the first screening alert until the pair has cleared after TCA. */
   windowStart: IsoUtc
   windowEnd: IsoUtc
   missDistanceM: number
@@ -149,8 +149,6 @@ export interface ManeuverStep {
   /** Zero for coast phases. */
   deltaVMps: number
   direction: RicDirection | null
-  /** Mean elements after this step; the globe propagates from these. */
-  elementsAfter: OrbitalElements
 }
 
 export type ColaStrategy = 'OPTIMAL_FUEL' | 'RAPID_CLEARANCE' | 'BALANCED'
