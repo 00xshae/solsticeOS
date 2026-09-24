@@ -1,15 +1,19 @@
 import { useState, type ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { InfoTooltip } from './InfoTooltip'
 
 /** Collapsible inspector section; the body fades in when opened. */
 export function Section({
   title,
+  info,
   aside,
   defaultOpen = true,
   children,
 }: {
   title: string
+  /** Definition shown in a hover/focus tooltip next to the title, instead of inline body text. */
+  info?: string
   aside?: ReactNode
   defaultOpen?: boolean
   children: ReactNode
@@ -22,11 +26,13 @@ export function Section({
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="flex flex-1 items-center gap-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-secondary transition-colors duration-150 hover:text-primary"
+          className="flex items-center gap-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-secondary transition-colors duration-150 hover:text-primary"
         >
           <ChevronDown className={cn('size-3.5 transition-transform duration-200 ease-in-out', !open && '-rotate-90')} />
           {title}
         </button>
+        {info && <InfoTooltip text={info} />}
+        <div className="flex-1" />
         {aside}
       </div>
       {open && <div className="animate-section-in">{children}</div>}

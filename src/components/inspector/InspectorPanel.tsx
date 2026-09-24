@@ -52,13 +52,10 @@ export function InspectorPanel() {
           <ManeuverEnvelopeEditor key={object.id} object={object} />
         </>
       )}
-      <Section title={object ? `Threat windows · ${objectWindows.length}` : `Threat windows · ${established.length}`}>
-        {!object && (
-          <p className="px-3 pt-2.5 text-[12px] leading-relaxed text-secondary">
-            Calculated only once an object sits in an owned or allied list and another in an opposed list. Tap a
-            rating to see how it is built.
-          </p>
-        )}
+      <Section
+        title={object ? `Threat windows · ${objectWindows.length}` : `Threat windows · ${established.length}`}
+        info="Calculated only once an object sits in an owned or allied list and another in an opposed list. Tap a rating to see how it is built."
+      >
         <ThreatWindowList
           windows={objectWindows}
           emptyText="No threat windows. Add it to an owned, allied or opposed list with a counterpart to screen it."
@@ -67,12 +64,11 @@ export function InspectorPanel() {
       <Section title="Threat log">
         <ThreatLog objectId={object?.id} />
       </Section>
-      <Section title={object ? `Conjunction windows · ${objectEvents.length}` : 'Conjunction windows'} defaultOpen={!threatWindow}>
-        {!object && (
-          <p className="px-3 pt-2.5 text-[12px] leading-relaxed text-secondary">
-            Screened only for owned × opposed pairs. Select a window to inspect its severity.
-          </p>
-        )}
+      <Section
+        title={object ? `Conjunction windows · ${objectEvents.length}` : 'Conjunction windows'}
+        info="Screened only for owned × opposed pairs. Select a window to inspect its severity."
+        defaultOpen={!threatWindow}
+      >
         <ConjunctionList
           events={objectEvents}
           emptyText="Not in any screened pair. Add it to an owned or opposed list to screen it."
