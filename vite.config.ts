@@ -7,6 +7,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Vercel's Clerk integration provisions NEXT_PUBLIC_-prefixed vars regardless
+  // of framework; expose those to client code alongside the Vite default.
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
