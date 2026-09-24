@@ -51,11 +51,11 @@ function primaryCategory(id: string): RsoListCategory {
 function satMesh(category: RsoListCategory) {
   const color = new THREE.Color(CATEGORY_HEX[category])
   const group = new THREE.Group()
-  group.add(new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8), new THREE.MeshBasicMaterial({ color })))
+  group.add(new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 8), new THREE.MeshBasicMaterial({ color })))
   // Soft halo so small objects stay findable when zoomed out.
   group.add(
     new THREE.Mesh(
-      new THREE.SphereGeometry(1.6, 12, 8),
+      new THREE.SphereGeometry(2.6, 12, 8),
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, depthWrite: false }),
     ),
   )
@@ -137,6 +137,9 @@ export function GlobeViewport() {
       .htmlElement((d) => (d as LabelDatum).el)
       .htmlTransitionDuration(0)
       .pointOfView(HOME_VIEW)
+    // Headlight: keep the lit hemisphere facing the viewer wherever the camera orbits.
+    const headlight = new THREE.DirectionalLight(0xffffff, 0.9 * Math.PI)
+    globe.lights([new THREE.AmbientLight(0xcccccc, 0.65 * Math.PI), headlight])
     globe.controls().autoRotate = false
     globeRef.current = globe
 
@@ -175,6 +178,7 @@ export function GlobeViewport() {
     let frame = 0
     let lastRingAt = -Infinity
     const render = (now: number) => {
+      headlight.position.copy(globe.camera().position)
       const s = useMissionStore.getState()
       const timeMs = selectDisplayTimeMs(s)
       for (const sat of sats) {
