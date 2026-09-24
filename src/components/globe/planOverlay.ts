@@ -3,7 +3,7 @@
 // the plan changes; everything is Earth-fixed, so satellites fly along it as time advances.
 import { rsoById } from '@/data'
 import { maneuveredElementsAt } from '@/lib/maneuver'
-import { geoAt, type GeoPoint } from '@/lib/orbit'
+import { geoAt, orbitalPeriodS, type GeoPoint } from '@/lib/orbit'
 import type { ConjunctionEvent, ManeuverSequence } from '@/types'
 
 export interface OverlayPath {
@@ -57,7 +57,9 @@ export function buildPlanOverlay(
   const paths: OverlayPath[] = [
     {
       id: 'plan-arc',
-      points: sample(b1, Date.parse(burn2.end), 360, primaryAt),
+      // Early burns are revolutions before TCA; draw only the final approach through Burn 2
+      // so the arc does not wrap the globe several times.
+      points: sample(Math.max(b1, tca - (orbitalPeriodS(primary.smaKm) * 1000) / 2), Date.parse(burn2.end), 240, primaryAt),
       color: '#67e8f9',
       stroke: 0.6,
       dash: 1,
