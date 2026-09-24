@@ -32,10 +32,10 @@ function sample(from: number, to: number, count: number, at: (t: number) => GeoP
 function markerElement(text: string, color: string) {
   const el = document.createElement('div')
   el.className =
-    'pointer-events-none -translate-y-4 whitespace-nowrap rounded-sm border px-1 font-mono text-[10px] font-semibold tracking-wider'
+    'pointer-events-none -translate-y-4 animate-fade-in whitespace-nowrap rounded border px-1.5 py-px font-mono text-[10px] font-semibold tabular-nums backdrop-blur-sm'
   el.style.color = color
   el.style.borderColor = color
-  el.style.background = 'rgba(11,15,23,0.8)'
+  el.style.background = 'rgba(0,0,0,0.7)'
   el.textContent = text
   return el
 }
