@@ -15,7 +15,7 @@ import type { RSOObject } from '@/types'
 
 function useRowSeverity(object: RSOObject) {
   const categories = rsoCategories(object.id)
-  const role = categories.includes('protected') ? 'vulnerable' : categories.includes('uncooperative') ? 'endangering' : null
+  const role = categories.includes('owned') ? 'vulnerable' : categories.includes('opposed') ? 'endangering' : null
   return useAggregateSeverity(object.id, role)
 }
 

@@ -147,12 +147,12 @@ export function ConjunctionCard({ event }: { event: ConjunctionEvent }) {
 
       <div className="grid grid-cols-2 gap-3 border-t border-line px-3 py-3">
         <div className="min-w-0">
-          <CategoryChip category="protected" />
+          <CategoryChip category="owned" />
           <div className="mt-1 truncate text-[13px] text-ink">{primary?.name}</div>
           <div className="font-mono text-[10px] text-ink-faint">{primary?.noradId} · PRIMARY</div>
         </div>
         <div className="min-w-0 text-right">
-          <CategoryChip category="uncooperative" />
+          <CategoryChip category="opposed" />
           <div className="mt-1 truncate text-[13px] text-ink">{secondary?.name}</div>
           <div className="font-mono text-[10px] text-ink-faint">{secondary?.noradId} · SECONDARY</div>
         </div>

@@ -1,8 +1,8 @@
 // Domain contracts for Orbital Rakshak.
 //
 // Mapping from Solstice OS concepts:
-//   Owned / Allied / Opposed lists  -> protected / cooperative / uncooperative RSO lists
-//   Threat window                   -> ConjunctionEvent (screened only for protected x uncooperative pairs)
+//   Owned / Allied / Opposed lists  -> the same three RSO list categories
+//   Threat window                   -> ThreatWindow (intercept); ConjunctionEvent is the separate collision screen
 //   Two-burn manoeuvre sequence     -> ManeuverSequence (COLA course of action)
 //   Threat rating (cheap/quick/soon) -> Conjunction Severity Index (probability/proximity/imminence)
 //   Threat log                      -> SeverityLogEntry
@@ -62,7 +62,7 @@ export interface RSOObject {
 }
 
 /** Operational meaning of a list; drives which pairs get screened. */
-export type RsoListCategory = 'protected' | 'cooperative' | 'uncooperative'
+export type RsoListCategory = 'owned' | 'allied' | 'opposed'
 
 export interface RSOList {
   id: string
@@ -92,9 +92,9 @@ export interface RicMiss {
 
 export interface ConjunctionEvent {
   id: string
-  /** Protected asset. */
+  /** Owned asset. */
   primaryId: string
-  /** Uncooperative object. */
+  /** Opposed object. */
   secondaryId: string
   tca: IsoUtc
   /** Decision window: from the first screening alert until the pair has cleared after TCA. */
@@ -204,7 +204,7 @@ export interface SeverityBreakdown {
 
 export interface SeverityLogEntry {
   objectId: string
-  /** Protected assets are "vulnerable"; uncooperative objects are "endangering". */
+  /** Owned assets are "vulnerable"; opposed objects are "endangering". */
   role: 'vulnerable' | 'endangering'
   assessedAt: IsoUtc
   previousIndex: number | null

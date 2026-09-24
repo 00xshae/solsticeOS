@@ -4,7 +4,7 @@ import { conjunctionById, conjunctions, maneuverSequences, rsoById, rsoLists, rs
 import { propagateEci } from '@/lib/orbit'
 
 const SEGMENTS: CatalogSegment[] = ['IND', 'PAY', 'RB', 'DEB']
-const CATEGORIES: RsoListCategory[] = ['protected', 'cooperative', 'uncooperative']
+const CATEGORIES: RsoListCategory[] = ['owned', 'allied', 'opposed']
 const PHASES: ManeuverPhase[] = ['COAST_MEAN_PRE', 'BURN_1', 'COAST_EPHEMERIS', 'BURN_2', 'COAST_MEAN_POST']
 
 const membersOf = (category: RsoListCategory) =>
@@ -25,10 +25,10 @@ describe('catalog', () => {
 })
 
 describe('conjunctions', () => {
-  const protectedIds = membersOf('protected')
-  const uncooperativeIds = membersOf('uncooperative')
+  const protectedIds = membersOf('owned')
+  const uncooperativeIds = membersOf('opposed')
 
-  it('screens only protected x uncooperative pairs', () => {
+  it('screens only owned x opposed pairs', () => {
     for (const e of conjunctions) {
       expect(protectedIds.has(e.primaryId), e.id).toBe(true)
       expect(uncooperativeIds.has(e.secondaryId), e.id).toBe(true)

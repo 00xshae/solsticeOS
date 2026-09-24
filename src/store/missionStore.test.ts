@@ -70,8 +70,8 @@ describe('catalog', () => {
   })
 
   it('reports list categories for an object', () => {
-    expect(rsoCategories('RSAT-2A')).toEqual(['protected'])
-    expect(rsoCategories('SL16-RB')).toEqual(['uncooperative'])
+    expect(rsoCategories('RSAT-2A')).toEqual(['owned'])
+    expect(rsoCategories('SL16-RB')).toEqual(['opposed'])
   })
 })
 

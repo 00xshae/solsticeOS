@@ -5,9 +5,9 @@ import type { RsoListCategory, SeverityBand } from '@/types'
 import { CATEGORY_LABEL } from '@/lib/format'
 
 const CATEGORY_CLASS: Record<RsoListCategory, string> = {
-  protected: 'border-protected/50 text-protected',
-  cooperative: 'border-cooperative/50 text-cooperative',
-  uncooperative: 'border-uncooperative/50 text-uncooperative',
+  owned: 'border-owned/60 text-owned',
+  allied: 'border-allied/60 text-allied',
+  opposed: 'border-opposed/60 text-opposed',
 }
 
 export function CategoryChip({ category, className }: { category: RsoListCategory; className?: string }) {

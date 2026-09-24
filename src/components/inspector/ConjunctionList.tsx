@@ -40,7 +40,7 @@ function ConjunctionRow({ event }: { event: ConjunctionEvent }) {
         <SeverityBadge index={severity.index} muted={!isConjunctionOpen(event, minute * 60_000)} />
         <div className="min-w-0">
           <div className="truncate text-[12px] font-medium text-protected">{primary?.name}</div>
-          <div className="truncate text-[12px] font-medium text-uncooperative">{secondary?.name}</div>
+          <div className="truncate text-[12px] font-medium text-opposed">{secondary?.name}</div>
         </div>
         <div className="text-right font-mono text-[10px] leading-4 tabular-nums text-tertiary">
           <div className="font-medium text-primary">{formatCountdown(Date.parse(event.tca), minute * 60_000)}</div>

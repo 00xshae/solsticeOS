@@ -38,12 +38,12 @@ export function InspectorPanel() {
       <Section title={object ? `Conjunction windows · ${objectEvents.length}` : 'Conjunction windows'}>
         {!object && (
           <p className="px-3 pt-2.5 text-[12px] leading-relaxed text-secondary">
-            Screened only for protected × uncooperative pairs. Select a window to inspect its severity.
+            Screened only for owned × opposed pairs. Select a window to inspect its severity.
           </p>
         )}
         <ConjunctionList
           events={objectEvents}
-          emptyText="Not in any screened pair. Add it to a protected or uncooperative list to screen it."
+          emptyText="Not in any screened pair. Add it to an owned or opposed list to screen it."
         />
       </Section>
     </aside>
