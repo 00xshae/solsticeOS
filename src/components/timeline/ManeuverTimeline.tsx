@@ -146,7 +146,9 @@ function Track({ event, sequence }: { event: ConjunctionEvent; sequence: Maneuve
             style={{ width: `${(seg.endFrac - seg.startFrac) * 100}%` }}
             title={`${seg.step.label} · ${seg.step.propagator}`}
           >
-            <span className="truncate font-mono text-[9px] font-semibold uppercase tracking-wider">{seg.step.label}</span>
+            <span className="truncate font-mono text-[9px] font-semibold uppercase tracking-wider">
+              {isBurn(seg.step.phase) ? seg.step.label.replace(/ \(.*\)$/, '') : seg.step.label}
+            </span>
             <span className="truncate font-mono text-[9px] opacity-75">
               {isBurn(seg.step.phase) ? `${seg.step.deltaVMps.toFixed(2)} m/s` : durationLabel(seg.endMs - seg.startMs)}
             </span>
