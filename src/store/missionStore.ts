@@ -37,6 +37,9 @@ export interface MissionState {
   envelopeOverrides: Record<string, Partial<ManeuverEnvelope>>
   screeningRadiusOverrideKm: number | null
 
+  /** Keep the camera centred on the selected object as it moves. */
+  followSelected: boolean
+
   colaStatus: ColaStatus
   complianceOpen: boolean
 }
@@ -59,6 +62,7 @@ export interface MissionActions {
   setScreeningRadius: (km: number | null) => void
 
   commitCola: () => void
+  toggleFollow: () => void
   setComplianceOpen: (open: boolean) => void
   resetDemo: () => void
 }
@@ -77,6 +81,7 @@ export const initialMissionState: MissionState = {
   scrubTimeMs: null,
   envelopeOverrides: {},
   screeningRadiusOverrideKm: null,
+  followSelected: false,
   colaStatus: 'PLANNING',
   complianceOpen: false,
 }
@@ -137,6 +142,7 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
   commitCola: () => {
     if (get().activeSequenceId) set({ colaStatus: 'COMMITTED' })
   },
+  toggleFollow: () => set((s) => ({ followSelected: !s.followSelected })),
   setComplianceOpen: (complianceOpen) => set({ complianceOpen }),
   resetDemo: () => set(initialMissionState),
 }))
