@@ -17,6 +17,7 @@ import {
   selectWindowRating,
   useMissionStore,
   type MissionState,
+  type SpeedMultiplier,
 } from '@/store/missionStore'
 import type { OrbitalElements, RSOObject } from '@/types'
 import { buildInterceptOverlay, buildPlanOverlay, type OverlayMarker, type OverlayPath } from './planOverlay'
@@ -402,6 +403,7 @@ export function GlobeViewport() {
       <div ref={containerRef} className="absolute inset-0" />
       <GlobeLegend />
       <SurfaceSwitcher surface={surface} onChange={setSurface} />
+      <SpeedControl />
       <button
         type="button"
         onClick={() => globeRef.current?.pointOfView(HOME_VIEW, 1000)}
@@ -410,6 +412,37 @@ export function GlobeViewport() {
         <LocateFixed className="size-3.5" /> Reset view
       </button>
     </section>
+  )
+}
+
+const SPEEDS: SpeedMultiplier[] = [10, 100, 1000]
+
+/** Mission-clock speed picker, moved off the navbar and onto the viewport it actually affects. */
+function SpeedControl() {
+  const speed = useMissionStore((s) => s.speed)
+  const setSpeed = useMissionStore((s) => s.setSpeed)
+  return (
+    <div
+      className="absolute bottom-3 right-3 flex overflow-hidden rounded-lg border border-glass-border bg-glass backdrop-blur-md light:shadow-lg"
+      role="radiogroup"
+      aria-label="Simulation speed"
+    >
+      {SPEEDS.map((s) => (
+        <button
+          key={s}
+          type="button"
+          role="radio"
+          aria-checked={speed === s}
+          onClick={() => setSpeed(s)}
+          className={cn(
+            'px-2.5 py-1.5 font-mono text-xs tabular-nums transition-colors duration-100 ease-out',
+            speed === s ? 'bg-accent-muted text-accent' : 'text-secondary hover:bg-elevated hover:text-primary',
+          )}
+        >
+          {s}x
+        </button>
+      ))}
+    </div>
   )
 }
 
