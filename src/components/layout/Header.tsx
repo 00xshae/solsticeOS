@@ -1,9 +1,7 @@
-import { Hexagon, Moon, Pause, Play, RotateCcw, Sun } from 'lucide-react'
+import { Pause, Play } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatUtc } from '@/lib/format'
-import { Pill } from '@/components/ui/Badge'
 import { useMissionStore, type SpeedMultiplier } from '@/store/missionStore'
-import { useThemeStore } from '@/store/themeStore'
 import { ViewTabs } from './ViewTabs'
 
 const SPEEDS: SpeedMultiplier[] = [1, 10, 60]
@@ -55,46 +53,15 @@ function MissionClock() {
   )
 }
 
-function ThemeToggle() {
-  const resolved = useThemeStore((s) => s.resolved)
-  const toggleTheme = useThemeStore((s) => s.toggleTheme)
-  const label = resolved === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
-  return (
-    <button type="button" onClick={toggleTheme} title={label} aria-label={label} className={iconButton}>
-      {resolved === 'dark' ? <Moon className="size-4" /> : <Sun className="size-4" />}
-    </button>
-  )
-}
-
 export function Header() {
-  const resetDemo = useMissionStore((s) => s.resetDemo)
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-6 border-b border-border bg-surface px-4">
-      <div className="flex items-center gap-3">
-        <Hexagon className="size-5 text-accent" strokeWidth={1.75} aria-hidden />
-        <div className="leading-tight">
-          <div className="text-sm font-semibold tracking-[0.15em] text-primary">ORBITAL RAKSHAK</div>
-          <div className="text-[11px] text-tertiary">IN-SPACe STM Platform · Conjunction Risk Analytics</div>
-        </div>
-        <div className="ml-4">
-          <ViewTabs />
-        </div>
+      <div className="flex items-center gap-4">
+        <div className="font-display text-lg leading-none text-primary [font-variant-caps:small-caps]">orbital rakshak</div>
+        <ViewTabs />
       </div>
 
-      <div className="hidden items-center gap-2 xl:flex">
-        <Pill tone="ok">UDA Data Feed: Green</Pill>
-        <Pill tone="info">ML Propagator: Active</Pill>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <MissionClock />
-        <div className="flex items-center gap-1.5">
-          <button type="button" onClick={resetDemo} title="Reset demo" aria-label="Reset demo" className={iconButton}>
-            <RotateCcw className="size-4" />
-          </button>
-          <ThemeToggle />
-        </div>
-      </div>
+      <MissionClock />
     </header>
   )
 }

@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { rsoObjects } from '@/data'
 import { cn } from '@/lib/cn'
 import { SEGMENT_CODE } from '@/lib/format'
-import { CategoryChip, SeverityBadge } from '@/components/ui/Badge'
+import { CategoryChip, Pill, SeverityBadge } from '@/components/ui/Badge'
 import { useCategories } from '@/hooks/useCategories'
 import { useAggregateSeverity } from '@/hooks/useSeverity'
 import { selectSearchResults, selectTrackedObjects, useMissionStore } from '@/store/missionStore'
@@ -116,6 +116,10 @@ export function CatalogSidebar() {
         <div className="mb-2 flex items-baseline justify-between">
           <h2 className="text-[11px] font-semibold uppercase tracking-widest text-secondary">RSO Catalog</h2>
           <span className="text-[11px] text-tertiary">{rsoObjects.length} in catalog</span>
+        </div>
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          <Pill tone="ok">UDA Data Feed: Green</Pill>
+          <Pill tone="info">ML Propagator: Active</Pill>
         </div>
         <label className="relative block">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-tertiary" />
