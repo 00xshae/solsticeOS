@@ -59,16 +59,6 @@
   --color-sev-orange-ink: #f97316;
   --color-sev-red-ink: #ef4444;
 
-  /* Legacy names, kept until every component moves to the tokens above. */
-  --color-void: var(--color-base);
-  --color-panel: var(--color-surface);
-  --color-panel-raised: var(--color-elevated);
-  --color-line: var(--color-border-strong);
-  --color-ink: var(--color-primary);
-  --color-ink-muted: var(--color-secondary);
-  --color-ink-faint: var(--color-tertiary);
-
-  --animate-fade-in: fade-in 300ms ease-out;
   --animate-scrim-in: fade-in 200ms ease-out;
   --animate-dialog-in: dialog-in 200ms ease-out;
   --animate-section-in: section-in 200ms ease-in-out;
@@ -110,7 +100,7 @@
   --color-elevated: #f5f5f4;
   --color-overlay: #ffffff;
   --color-section: #fafaf9;
-  --color-glass: rgb(255 255 255 / 0.85);
+  --color-glass: rgb(255 255 255 / 0.92);
   --color-glass-border: #e7e5e4;
   --color-scrim: rgb(12 10 9 / 0.2);
 

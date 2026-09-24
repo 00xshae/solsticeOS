@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url'
+import { configDefaults } from 'vitest/config'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -11,5 +12,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // Agent worktrees under .claude/ hold other branches' tests.
+    exclude: [...configDefaults.exclude, '.claude/**'],
   },
 })
