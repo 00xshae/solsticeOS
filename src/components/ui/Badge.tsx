@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import { severityBand } from '@/lib/severity'
 import type { RsoListCategory, SeverityBand } from '@/types'
@@ -14,7 +14,7 @@ export function CategoryChip({ category, className }: { category: RsoListCategor
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-px font-mono text-[10px] uppercase tracking-wider',
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-medium uppercase leading-none tracking-wider',
         CATEGORY_CLASS[category],
         className,
       )}
@@ -24,17 +24,18 @@ export function CategoryChip({ category, className }: { category: RsoListCategor
   )
 }
 
+// Yellow keeps dark text: white on #eab308 is unreadable. `--glow` feeds the dark-mode halo.
 const BAND_CLASS: Record<SeverityBand, string> = {
-  green: 'bg-sev-green',
-  blue: 'bg-sev-blue',
-  yellow: 'bg-sev-yellow text-void',
-  orange: 'bg-sev-orange',
-  red: 'bg-sev-red',
+  green: 'bg-sev-green [--glow:var(--color-sev-green)]',
+  blue: 'bg-sev-blue [--glow:var(--color-sev-blue)]',
+  yellow: 'bg-sev-yellow text-stone-950 [--glow:var(--color-sev-yellow)]',
+  orange: 'bg-sev-orange [--glow:var(--color-sev-orange)]',
+  red: 'bg-sev-red [--glow:var(--color-sev-red)]',
 }
 
 /**
  * Rounded 0-100 index tile in its severity band colour. `muted` greys it out, e.g. once a
- * conjunction window has closed.
+ * conjunction window has closed. The value pulses briefly when it changes.
  */
 export function SeverityBadge({
   index,
@@ -47,16 +48,24 @@ export function SeverityBadge({
   muted?: boolean
   className?: string
 }) {
+  const value = Math.round(index)
+  const mounted = useRef(false)
+  useEffect(() => {
+    mounted.current = true
+  }, [])
+
   return (
     <span
       className={cn(
-        'inline-grid place-items-center rounded font-mono font-semibold tabular-nums text-white',
-        size === 'sm' ? 'h-6 min-w-7 px-1 text-xs' : 'h-12 min-w-12 px-2 text-2xl',
-        muted ? 'bg-panel-raised text-ink-faint' : BAND_CLASS[severityBand(index)],
+        'inline-grid place-items-center font-mono tabular-nums text-white transition-colors duration-150',
+        size === 'sm' ? 'h-6 min-w-7 rounded-md px-1 text-xs font-semibold' : 'h-12 min-w-12 rounded-lg px-2 text-2xl font-bold',
+        muted ? 'bg-elevated text-tertiary' : cn(BAND_CLASS[severityBand(index)], 'dark:glow'),
         className,
       )}
     >
-      {Math.round(index)}
+      <span key={value} className={cn(mounted.current && 'animate-value-pulse')}>
+        {value}
+      </span>
     </span>
   )
 }
@@ -65,10 +74,10 @@ export function Pill({ children, tone = 'ok' }: { children: ReactNode; tone?: 'o
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider',
-        tone === 'ok' && 'border-sev-green/40 text-sev-green',
-        tone === 'warn' && 'border-sev-yellow/40 text-sev-yellow',
-        tone === 'info' && 'border-protected/40 text-protected',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase leading-none tracking-wide',
+        tone === 'ok' && 'border-sev-green/30 bg-sev-green/[0.06] text-sev-green-ink',
+        tone === 'warn' && 'border-sev-yellow/30 bg-sev-yellow/[0.06] text-sev-yellow-ink',
+        tone === 'info' && 'border-accent/30 bg-accent-muted text-accent',
       )}
     >
       <span className="size-1.5 animate-pulse rounded-full bg-current" />
