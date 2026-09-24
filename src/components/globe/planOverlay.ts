@@ -60,7 +60,7 @@ export function buildPlanOverlay(
       // Early burns are revolutions before TCA; draw only the final approach through Burn 2
       // so the arc does not wrap the globe several times.
       points: sample(Math.max(b1, tca - (orbitalPeriodS(primary.smaKm) * 1000) / 2), Date.parse(burn2.end), 240, primaryAt),
-      color: '#67e8f9',
+      color: '#7fa0b3',
       stroke: 0.6,
       dash: 1,
       gap: 0,
@@ -84,8 +84,8 @@ export function buildPlanOverlay(
   })
 
   const markers = [
-    marker('b1', `B1 +${burn1.deltaVMps.toFixed(2)} m/s`, '#f97316', primaryAt(b1)),
-    marker('b2', `B2 −${burn2.deltaVMps.toFixed(2)} m/s`, '#f97316', primaryAt(b2)),
+    marker('b1', `B1 +${burn1.deltaVMps.toFixed(2)} m/s`, '#a66a42', primaryAt(b1)),
+    marker('b2', `B2 −${burn2.deltaVMps.toFixed(2)} m/s`, '#a66a42', primaryAt(b2)),
     marker('tca', 'TCA', severityHex, geoAt(secondary, tca)),
   ]
   return { paths, markers }
@@ -133,8 +133,8 @@ export function buildInterceptOverlay(
   return {
     paths,
     markers: [
-      marker('b1', `B1 ${signed(burn1)}`, '#f97316', chaserAt(b1)),
-      marker('b2', `B2 ${signed(burn2)}`, '#f97316', chaserAt(b2)),
+      marker('b1', `B1 ${signed(burn1)}`, '#a66a42', chaserAt(b1)),
+      marker('b2', `B2 ${signed(burn2)}`, '#a66a42', chaserAt(b2)),
       marker('arrival', `ARRIVAL · ${sequence.standoffKm.toFixed(1)} km`, ratingHex, geoAt(target, arrival)),
     ],
   }
