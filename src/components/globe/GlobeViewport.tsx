@@ -188,7 +188,7 @@ export function GlobeViewport() {
       .globeImageUrl('/textures/earth-blue-marble.jpg')
       .bumpImageUrl('/textures/earth-topology.png')
       .showAtmosphere(true)
-      .atmosphereColor('#38bdf8')
+      .atmosphereColor('#5c7c93')
       .atmosphereAltitude(0.18)
       .polygonsData([])
       .polygonAltitude(0.006)
@@ -452,7 +452,7 @@ function GlobeLegend() {
           Tracked RSO
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-0.5 w-3 rounded-full bg-[#67e8f9] light:bg-cyan-600" />
+          <span className="h-0.5 w-3 rounded-full bg-[#7fa0b3] light:bg-[#4a6b8c]" />
           COLA arc
         </span>
         <span className="flex items-center gap-1.5">

@@ -61,15 +61,15 @@ export const CATEGORY_LABEL: Record<RsoListCategory, string> = {
 
 /** Hex colours for canvas/WebGL use; keep in sync with the @theme tokens in index.css. */
 export const CATEGORY_HEX: Record<RsoListCategory, string> = {
-  owned: '#3b82f6',
-  allied: '#22c55e',
-  opposed: '#ef4444',
+  owned: '#4a6b8c',
+  allied: '#4e7a5a',
+  opposed: '#9c5049',
 }
 
 export const SEVERITY_HEX: Record<SeverityBand, string> = {
-  green: '#22c55e',
-  blue: '#3b82f6',
-  yellow: '#eab308',
-  orange: '#f97316',
-  red: '#ef4444',
+  green: '#4e7a5a',
+  blue: '#4a6b8c',
+  yellow: '#c4a15e',
+  orange: '#a66a42',
+  red: '#9c5049',
 }
