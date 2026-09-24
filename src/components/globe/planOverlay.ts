@@ -4,7 +4,7 @@
 import { rsoById } from '@/data'
 import { maneuveredElementsAt } from '@/lib/maneuver'
 import { geoAt, orbitalPeriodS, type GeoPoint } from '@/lib/orbit'
-import type { ConjunctionEvent, ManeuverSequence } from '@/types'
+import type { ConjunctionEvent, InterceptSequence, ManeuverSequence, ManeuverStep, ThreatWindow } from '@/types'
 
 export interface OverlayPath {
   id: string
@@ -89,4 +89,53 @@ export function buildPlanOverlay(
     marker('tca', 'TCA', severityHex, geoAt(secondary, tca)),
   ]
   return { paths, markers }
+}
+
+const signed = (step: ManeuverStep) => `${Math.sign(step.direction?.inTrack ?? 1) < 0 ? '−' : '+'}${step.deltaVMps.toFixed(2)} m/s`
+
+/**
+ * Overlay for an intercept: the chaser's final revolution into Burn 2 in the rating colour,
+ * plus B1 / B2 markers and the arrival point on the target. Burn 1 is usually many
+ * revolutions earlier, so only its marker is drawn, not the whole phasing arc.
+ */
+export function buildInterceptOverlay(
+  window: ThreatWindow,
+  sequence: InterceptSequence,
+  ratingHex: string,
+  toAlt: (altKm: number) => number,
+): { paths: OverlayPath[]; markers: OverlayMarker[] } {
+  const chaser = rsoById.get(window.opposedId)!.elements
+  const target = rsoById.get(window.targetId)!.elements
+  const chaserAt = (t: number) => geoAt(maneuveredElementsAt(chaser, sequence, t), t)
+  const [, burn1, , burn2] = sequence.steps
+  const b1 = Date.parse(burn1.start)
+  const b2 = Date.parse(burn2.start)
+  const arrival = Date.parse(burn2.end)
+  const periodMs = orbitalPeriodS(chaser.smaKm) * 1000
+
+  const paths: OverlayPath[] = [
+    {
+      id: 'intercept-approach',
+      points: sample(Math.max(b1, b2 - periodMs), arrival, 240, chaserAt),
+      color: ratingHex,
+      stroke: 0.6,
+      dash: 0.02,
+      gap: 0.008,
+    },
+  ]
+  const marker = (id: string, text: string, color: string, point: GeoPoint): OverlayMarker => ({
+    id,
+    el: markerElement(text, color),
+    lat: point.lat,
+    lng: point.lng,
+    alt: toAlt(point.altKm),
+  })
+  return {
+    paths,
+    markers: [
+      marker('b1', `B1 ${signed(burn1)}`, '#f97316', chaserAt(b1)),
+      marker('b2', `B2 ${signed(burn2)}`, '#f97316', chaserAt(b2)),
+      marker('arrival', `ARRIVAL · ${sequence.standoffKm.toFixed(1)} km`, ratingHex, geoAt(target, arrival)),
+    ],
+  }
 }
