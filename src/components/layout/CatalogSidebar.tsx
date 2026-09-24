@@ -4,23 +4,19 @@ import { rsoObjects } from '@/data'
 import { cn } from '@/lib/cn'
 import { SEGMENT_CODE } from '@/lib/format'
 import { CategoryChip, SeverityBadge } from '@/components/ui/Badge'
+import { useCategories } from '@/hooks/useCategories'
 import { useAggregateSeverity } from '@/hooks/useSeverity'
-import {
-  rsoCategories,
-  selectSearchResults,
-  selectTrackedObjects,
-  useMissionStore,
-} from '@/store/missionStore'
+import { selectSearchResults, selectTrackedObjects, useMissionStore } from '@/store/missionStore'
 import type { RSOObject } from '@/types'
 
 function useRowSeverity(object: RSOObject) {
-  const categories = rsoCategories(object.id)
+  const categories = useCategories(object.id)
   const role = categories.includes('owned') ? 'vulnerable' : categories.includes('opposed') ? 'endangering' : null
   return useAggregateSeverity(object.id, role)
 }
 
 function ObjectMeta({ object }: { object: RSOObject }) {
-  const [category] = rsoCategories(object.id)
+  const [category] = useCategories(object.id)
   return (
     <div className="mt-0.5 flex items-center gap-2 font-mono text-[11px] text-tertiary">
       <span>{object.noradId}</span>

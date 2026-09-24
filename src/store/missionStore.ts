@@ -6,10 +6,13 @@
 import { create } from 'zustand'
 import { conjunctionById, conjunctions, DEMO_EPOCH_MS, rsoById, rsoLists, rsoObjects, sequenceById } from '@/data'
 import { aggregateSeverity, computeSeverity } from '@/lib/severity'
+import { categoriesOf } from '@/lib/threatScreen'
 import type {
   ConjunctionEvent,
+  ListScope,
   ManeuverEnvelope,
   ManeuverSequence,
+  RSOList,
   RSOObject,
   RsoListCategory,
   SeverityBreakdown,
@@ -17,11 +20,24 @@ import type {
 
 export type SpeedMultiplier = 1 | 10 | 60
 export type ColaStatus = 'PLANNING' | 'COMMITTED'
+export type AppView = 'globe' | 'lists'
+
+export interface NewListInput {
+  name: string
+  category: RsoListCategory
+  scope: ListScope
+}
 
 export interface MissionState {
   simTimeMs: number
   playing: boolean
   speed: SpeedMultiplier
+
+  view: AppView
+  /** RSO list open on the lists page; null shows the saved-watchlists table. */
+  openListId: string | null
+  /** Seeded org lists plus any the analyst creates; edits last for the session. */
+  lists: RSOList[]
 
   searchQuery: string
   /** Objects the analyst has added from search: listed in the sidebar and drawn on the globe. */
@@ -50,6 +66,15 @@ export interface MissionActions {
   togglePlaying: () => void
   setSpeed: (speed: SpeedMultiplier) => void
 
+  setView: (view: AppView) => void
+  openList: (id: string | null) => void
+  /** Returns the new list's id. */
+  createList: (input: NewListInput) => string
+  renameList: (id: string, name: string) => void
+  deleteList: (id: string) => void
+  addListMember: (listId: string, rsoId: string) => void
+  removeListMember: (listId: string, rsoId: string) => void
+
   setSearchQuery: (query: string) => void
   trackRso: (id: string) => void
   untrackRso: (id: string) => void
@@ -75,6 +100,9 @@ export const initialMissionState: MissionState = {
   simTimeMs: DEMO_EPOCH_MS,
   playing: true,
   speed: 1,
+  view: 'globe',
+  openListId: null,
+  lists: rsoLists,
   searchQuery: '',
   trackedIds: [],
   selectedRsoId: null,
@@ -91,6 +119,11 @@ export const initialMissionState: MissionState = {
 
 const withTracked = (ids: string[], id: string) => (ids.includes(id) || !rsoById.has(id) ? ids : [...ids, id])
 
+let listCounter = 0
+
+const updateList = (lists: RSOList[], id: string, patch: (l: RSOList) => Partial<RSOList>) =>
+  lists.map((l) => (l.id === id ? { ...l, ...patch(l) } : l))
+
 const sequenceBounds = (sequence: ManeuverSequence): [number, number] => [
   Date.parse(sequence.steps[0].start),
   Date.parse(sequence.steps[4].end),
@@ -105,6 +138,31 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
   },
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
   setSpeed: (speed) => set({ speed }),
+
+  setView: (view) => set({ view }),
+  openList: (openListId) => set({ openListId, view: 'lists' }),
+  createList: ({ name, category, scope }) => {
+    const id = `LST-NEW-${++listCounter}`
+    set((s) => ({ lists: [...s.lists, { id, name: name.trim().toUpperCase(), category, scope, memberIds: [] }] }))
+    return id
+  },
+  renameList: (id, name) => {
+    if (name.trim()) set((s) => ({ lists: updateList(s.lists, id, () => ({ name: name.trim().toUpperCase() })) }))
+  },
+  // Only the analyst's own lists can be deleted; org lists are managed elsewhere.
+  deleteList: (id) =>
+    set((s) => {
+      if (s.lists.find((l) => l.id === id)?.scope !== 'USER') return {}
+      return { lists: s.lists.filter((l) => l.id !== id), ...(s.openListId === id && { openListId: null }) }
+    }),
+  addListMember: (listId, rsoId) => {
+    if (!rsoById.has(rsoId)) return
+    set((s) => ({
+      lists: updateList(s.lists, listId, (l) => ({ memberIds: l.memberIds.includes(rsoId) ? l.memberIds : [...l.memberIds, rsoId] })),
+    }))
+  },
+  removeListMember: (listId, rsoId) =>
+    set((s) => ({ lists: updateList(s.lists, listId, (l) => ({ memberIds: l.memberIds.filter((m) => m !== rsoId) })) })),
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   trackRso: (id) => set((s) => ({ trackedIds: withTracked(s.trackedIds, id) })),
@@ -208,16 +266,13 @@ export function selectTrackedObjects(s: MissionState): RSOObject[] {
   return s.trackedIds.flatMap((id) => rsoById.get(id) ?? [])
 }
 
-const categoriesById = new Map<string, Set<RsoListCategory>>()
-for (const list of rsoLists) {
-  for (const id of list.memberIds) {
-    const set = categoriesById.get(id) ?? new Set<RsoListCategory>()
-    set.add(list.category)
-    categoriesById.set(id, set)
-  }
+/** List categories an object belongs to, in owned / allied / opposed order. */
+export const selectCategories = (s: MissionState, id: string): RsoListCategory[] => {
+  const categories = categoriesOf(s.lists, id)
+  return (['owned', 'allied', 'opposed'] as const).filter((c) => categories.has(c))
 }
 
-export const rsoCategories = (id: string): RsoListCategory[] => [...(categoriesById.get(id) ?? [])]
+export const selectOpenList = (s: MissionState): RSOList | null => s.lists.find((l) => l.id === s.openListId) ?? null
 
 /** Catalog envelope with the analyst's editor overrides applied. */
 export function selectEffectiveEnvelope(s: MissionState, rsoId: string): ManeuverEnvelope | null {

@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { DEMO_EPOCH_MS, sequenceById } from '@/data'
 import {
   initialMissionState,
-  rsoCategories,
+  selectCategories,
+  selectOpenList,
   selectActiveSequence,
   selectAggregateSeverity,
   selectConjunctionsBySeverity,
@@ -70,8 +71,41 @@ describe('catalog', () => {
   })
 
   it('reports list categories for an object', () => {
-    expect(rsoCategories('RSAT-2A')).toEqual(['owned'])
-    expect(rsoCategories('SL16-RB')).toEqual(['opposed'])
+    expect(selectCategories(state(), 'RSAT-2A')).toEqual(['owned'])
+    expect(selectCategories(state(), 'SL16-RB')).toEqual(['opposed'])
+  })
+})
+
+describe('rso lists', () => {
+  it('creates an empty, upper-cased list and opens it on the lists page', () => {
+    const id = state().createList({ name: 'Opposed inspector 2', category: 'opposed', scope: 'USER' })
+    state().openList(id)
+    expect(selectOpenList(state())).toMatchObject({ name: 'OPPOSED INSPECTOR 2', category: 'opposed', scope: 'USER', memberIds: [] })
+    expect(state().view).toBe('lists')
+  })
+
+  it('adds and removes members once each and updates categories', () => {
+    const id = state().createList({ name: 'Watch', category: 'opposed', scope: 'USER' })
+    state().addListMember(id, 'INSP-2')
+    state().addListMember(id, 'INSP-2')
+    state().addListMember(id, 'NOT-A-REAL-ID')
+    expect(selectOpenList({ ...state(), openListId: id })!.memberIds).toEqual(['INSP-2'])
+    expect(selectCategories(state(), 'INSP-2')).toEqual(['opposed'])
+    state().removeListMember(id, 'INSP-2')
+    expect(selectCategories(state(), 'INSP-2')).toEqual([])
+  })
+
+  it('renames lists but deletes only user lists', () => {
+    const id = state().createList({ name: 'Mine', category: 'owned', scope: 'USER' })
+    state().renameList(id, 'team blue')
+    state().renameList(id, '   ')
+    expect(state().lists.find((l) => l.id === id)!.name).toBe('TEAM BLUE')
+    state().deleteList('LST-IND')
+    expect(state().lists.some((l) => l.id === 'LST-IND')).toBe(true)
+    state().openList(id)
+    state().deleteList(id)
+    expect(state()).toMatchObject({ openListId: null })
+    expect(state().lists.some((l) => l.id === id)).toBe(false)
   })
 })
 
