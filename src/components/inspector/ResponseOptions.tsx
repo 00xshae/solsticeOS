@@ -111,7 +111,7 @@ function ExecuteDialog({ event, m, onClose }: { event: ConjunctionEvent; m: CoaM
     >
       <div className="space-y-3 px-4 py-4 text-[13px] leading-relaxed text-secondary">
         <p>
-          Commit <span className="font-medium text-primary">{sequence.name}</span> for <span className="font-medium text-protected">{primary?.name}</span>.
+          Commit <span className="font-medium text-primary">{sequence.name}</span> for <span className="font-medium text-owned">{primary?.name}</span>.
           The plan is queued for upload and locked until you pick another course of action.
         </p>
         <ul className="space-y-1 rounded-lg border border-border bg-base p-3 font-mono text-[11px] tabular-nums text-primary">

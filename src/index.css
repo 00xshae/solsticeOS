@@ -38,10 +38,6 @@
   --color-accent-glow: rgb(6 182 212 / 0.15);
   --color-on-accent: #000000;
 
-  --color-protected: #06b6d4;
-  --color-cooperative: #34d399;
-  --color-uncooperative: #f59e0b;
-
   /* RSO list categories (Solstice OS): Owned blue, Allied green, Opposed red. */
   --color-owned: #3b82f6;
   --color-allied: #22c55e;
@@ -119,10 +115,6 @@
   --color-accent-muted: rgb(8 145 178 / 0.08);
   --color-accent-glow: rgb(8 145 178 / 0.1);
   --color-on-accent: #ffffff;
-
-  --color-protected: #0891b2;
-  --color-cooperative: #059669;
-  --color-uncooperative: #d97706;
 
   --color-owned: #2563eb;
   --color-allied: #16a34a;
