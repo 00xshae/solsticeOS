@@ -46,7 +46,7 @@ export function ObjectDetails({ object }: { object: RSOObject }) {
         <Field label="RCS" value={object.rcs} mono={false} />
       </div>
 
-      <Section title="More details" defaultOpen={false}>
+      <Section title="More details">
         <div className="grid grid-cols-3 gap-3 px-3 py-3">
           <Field label="COSPAR ID" value={object.cosparId} />
           <Field label="Launch" value={date(object.launchDate)} />

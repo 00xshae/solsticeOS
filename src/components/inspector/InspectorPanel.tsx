@@ -67,7 +67,6 @@ export function InspectorPanel() {
       <Section
         title={object ? `Conjunction windows · ${objectEvents.length}` : 'Conjunction windows'}
         info="Screened only for owned × opposed pairs. Select a window to inspect its severity."
-        defaultOpen={!threatWindow}
       >
         <ConjunctionList
           events={objectEvents}

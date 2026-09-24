@@ -8,7 +8,7 @@ export function Section({
   title,
   info,
   aside,
-  defaultOpen = true,
+  defaultOpen = false,
   children,
 }: {
   title: string
