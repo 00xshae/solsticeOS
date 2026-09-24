@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, type CSSProperties } from 'react'
 import { cn } from '@/lib/cn'
 
 /** Labelled range input with a live value readout; `modified` highlights analyst overrides. */
@@ -24,14 +24,18 @@ export function Slider({
   onChange: (value: number) => void
 }) {
   const id = useId()
+  const fill = max > min ? ((value - min) / (max - min)) * 100 : 0
   return (
-    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1">
-      <label htmlFor={id} className="font-mono text-[10px] uppercase tracking-widest text-ink-muted">
+    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5">
+      <label htmlFor={id} className="text-[10px] font-medium uppercase tracking-widest text-secondary">
         {label}
-        {modified && <span className="ml-1.5 text-sev-yellow">●</span>}
+        {modified && <span className="ml-1.5 text-sev-yellow-ink">●</span>}
       </label>
-      <output htmlFor={id} className={cn('font-mono text-xs tabular-nums', modified ? 'text-sev-yellow' : 'text-ink')}>
-        {value.toFixed(digits)} <span className="text-ink-faint">{unit}</span>
+      <output
+        htmlFor={id}
+        className={cn('font-mono text-xs font-medium tabular-nums', modified ? 'text-sev-yellow-ink' : 'text-primary')}
+      >
+        {value.toFixed(digits)} <span className="font-normal text-tertiary">{unit}</span>
       </output>
       <input
         id={id}
@@ -41,7 +45,8 @@ export function Slider({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="col-span-2 h-1 w-full cursor-pointer accent-protected"
+        style={{ '--fill': `${fill}%` } as CSSProperties}
+        className="range col-span-2 h-3.5 w-full cursor-pointer"
       />
     </div>
   )
