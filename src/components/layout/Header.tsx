@@ -4,6 +4,7 @@ import { formatUtc } from '@/lib/format'
 import { Pill } from '@/components/ui/Badge'
 import { useMissionStore, type SpeedMultiplier } from '@/store/missionStore'
 import { useThemeStore } from '@/store/themeStore'
+import { ViewTabs } from './ViewTabs'
 
 const SPEEDS: SpeedMultiplier[] = [1, 10, 60]
 
@@ -75,9 +76,12 @@ export function Header() {
           <div className="text-sm font-semibold tracking-[0.15em] text-primary">ORBITAL RAKSHAK</div>
           <div className="text-[11px] text-tertiary">IN-SPACe STM Platform · Conjunction Risk Analytics</div>
         </div>
+        <div className="ml-4">
+          <ViewTabs />
+        </div>
       </div>
 
-      <div className="hidden items-center gap-2 lg:flex">
+      <div className="hidden items-center gap-2 xl:flex">
         <Pill tone="ok">UDA Data Feed: Green</Pill>
         <Pill tone="info">ML Propagator: Active</Pill>
       </div>
