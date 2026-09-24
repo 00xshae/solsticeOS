@@ -33,17 +33,17 @@ function ConjunctionRow({ event }: { event: ConjunctionEvent }) {
         onClick={() => selectConjunction(active ? null : event.id)}
         aria-pressed={active}
         className={cn(
-          'grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 border-l-2 px-3 py-2 text-left',
-          active ? 'border-protected bg-protected/10' : 'border-transparent hover:bg-panel-raised',
+          'grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 border-l-2 px-3 py-2 text-left transition-colors duration-150 ease-out',
+          active ? 'border-accent bg-accent-muted' : 'border-transparent hover:bg-elevated',
         )}
       >
         <SeverityBadge index={severity.index} muted={!isConjunctionOpen(event, minute * 60_000)} />
         <div className="min-w-0">
-          <div className="truncate text-[12px] text-protected">{primary?.name}</div>
-          <div className="truncate text-[12px] text-uncooperative">{secondary?.name}</div>
+          <div className="truncate text-[12px] font-medium text-protected">{primary?.name}</div>
+          <div className="truncate text-[12px] font-medium text-uncooperative">{secondary?.name}</div>
         </div>
-        <div className="text-right font-mono text-[10px] leading-4 tabular-nums text-ink-muted">
-          <div className="text-ink">{formatCountdown(Date.parse(event.tca), minute * 60_000)}</div>
+        <div className="text-right font-mono text-[10px] leading-4 tabular-nums text-tertiary">
+          <div className="font-medium text-primary">{formatCountdown(Date.parse(event.tca), minute * 60_000)}</div>
           <div>{formatKm(event.missDistanceM)}</div>
           <div>Pc {formatPc(event.pc)}</div>
         </div>
@@ -72,7 +72,7 @@ export function ConjunctionList({ events, emptyText }: { events: ConjunctionEven
   return (
     <div>
       <div className="flex items-center gap-1 px-3 py-1.5" role="group" aria-label="Sort conjunctions">
-        <ArrowDownUp className="mr-1 size-3 text-ink-faint" />
+        <ArrowDownUp className="mr-1 size-3 text-tertiary" />
         {SORTS.map((s) => (
           <button
             key={s.key}
@@ -81,8 +81,8 @@ export function ConjunctionList({ events, emptyText }: { events: ConjunctionEven
             onClick={() => setSort(s.key)}
             aria-pressed={sort === s.key}
             className={cn(
-              'rounded px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider',
-              sort === s.key ? 'bg-protected/15 text-protected' : 'text-ink-faint hover:text-ink',
+              'rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider transition-colors duration-100 ease-out',
+              sort === s.key ? 'bg-accent-muted text-accent' : 'text-tertiary hover:bg-elevated hover:text-primary',
             )}
           >
             {s.label}
@@ -90,13 +90,13 @@ export function ConjunctionList({ events, emptyText }: { events: ConjunctionEven
         ))}
       </div>
       {sorted.length > 0 ? (
-        <ul className="divide-y divide-line/50">
+        <ul className="divide-y divide-border">
           {sorted.map((e) => (
             <ConjunctionRow key={e.id} event={e} />
           ))}
         </ul>
       ) : (
-        <p className="px-3 pb-3 text-[12px] text-ink-faint">{emptyText}</p>
+        <p className="px-3 pb-3 text-[12px] text-tertiary">{emptyText}</p>
       )}
     </div>
   )
