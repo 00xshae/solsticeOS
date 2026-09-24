@@ -1,2 +1,6 @@
 # Internal reference docs (not for distribution)
 *.pdf
+
+node_modules
+dist
+*.tsbuildinfo
