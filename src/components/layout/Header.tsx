@@ -55,13 +55,25 @@ function MissionClock() {
 
 export function Header() {
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-6 border-b border-border bg-surface px-4">
+    <header className="relative flex h-14 shrink-0 items-center justify-between gap-6 bg-glass px-4 backdrop-blur-md">
       <div className="flex items-center gap-4">
-        <div className="font-display text-lg leading-none text-primary [font-variant-caps:small-caps]">orbital rakshak</div>
+        <div className="flex items-center gap-2">
+          <span className="glow size-1.5 rounded-full bg-accent [--glow:var(--color-accent)]" aria-hidden />
+          <div className="font-display text-lg leading-none tracking-wide text-primary [font-variant-caps:small-caps]">
+            orbital rakshak
+          </div>
+        </div>
+        <div className="h-5 w-px bg-border-strong" aria-hidden />
         <ViewTabs />
       </div>
 
       <MissionClock />
+
+      {/* Gradient hairline instead of a flat border — reads as a lit console edge, not a divider. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent"
+        aria-hidden
+      />
     </header>
   )
 }
