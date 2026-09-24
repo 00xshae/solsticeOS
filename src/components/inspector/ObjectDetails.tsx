@@ -3,13 +3,15 @@ import { EARTH_RADIUS_KM } from '@/lib/orbit'
 import { SEGMENT_LABEL } from '@/lib/format'
 import { CategoryChip } from '@/components/ui/Badge'
 import { Field, Section } from '@/components/ui/Section'
-import { rsoCategories, useMissionStore } from '@/store/missionStore'
+import { useCategories } from '@/hooks/useCategories'
+import { useMissionStore } from '@/store/missionStore'
 import type { RSOObject } from '@/types'
 
 const date = (iso: string | null) => (iso ? iso.slice(0, 10) : '—')
 
 export function ObjectDetails({ object }: { object: RSOObject }) {
   const selectRso = useMissionStore((s) => s.selectRso)
+  const categories = useCategories(object.id)
   const el = object.elements
   const perigeeKm = el.smaKm * (1 - el.ecc) - EARTH_RADIUS_KM
   const apogeeKm = el.smaKm * (1 + el.ecc) - EARTH_RADIUS_KM
@@ -23,7 +25,7 @@ export function ObjectDetails({ object }: { object: RSOObject }) {
             <span className="font-mono text-[10px] text-ink-faint">NORAD {object.noradId}</span>
           </div>
           <div className="mt-1 flex flex-wrap gap-1">
-            {rsoCategories(object.id).map((c) => (
+            {categories.map((c) => (
               <CategoryChip key={c} category={c} />
             ))}
           </div>
