@@ -1,8 +1,9 @@
-import { Hexagon, Pause, Play, RotateCcw } from 'lucide-react'
+import { Hexagon, Moon, Pause, Play, RotateCcw, Sun } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { formatUtc } from '@/lib/format'
 import { Pill } from '@/components/ui/Badge'
 import { useMissionStore, type SpeedMultiplier } from '@/store/missionStore'
+import { useThemeStore } from '@/store/themeStore'
 
 const SPEEDS: SpeedMultiplier[] = [1, 10, 60]
 
@@ -53,6 +54,17 @@ function MissionClock() {
   )
 }
 
+function ThemeToggle() {
+  const resolved = useThemeStore((s) => s.resolved)
+  const toggleTheme = useThemeStore((s) => s.toggleTheme)
+  const label = resolved === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
+  return (
+    <button type="button" onClick={toggleTheme} title={label} aria-label={label} className={iconButton}>
+      {resolved === 'dark' ? <Moon className="size-4" /> : <Sun className="size-4" />}
+    </button>
+  )
+}
+
 export function Header() {
   const resetDemo = useMissionStore((s) => s.resetDemo)
   return (
@@ -76,6 +88,7 @@ export function Header() {
           <button type="button" onClick={resetDemo} title="Reset demo" aria-label="Reset demo" className={iconButton}>
             <RotateCcw className="size-4" />
           </button>
+          <ThemeToggle />
         </div>
       </div>
     </header>
