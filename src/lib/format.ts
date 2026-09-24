@@ -36,16 +36,16 @@ export const SEGMENT_LABEL: Record<CatalogSegment, string> = {
 export const SEGMENT_CODE: Record<CatalogSegment, string> = { IND: 'IND', PAY: 'PAY', RB: 'R/B', DEB: 'DEB' }
 
 export const CATEGORY_LABEL: Record<RsoListCategory, string> = {
-  protected: 'Protected',
-  cooperative: 'Cooperative',
-  uncooperative: 'Uncooperative',
+  owned: 'Owned',
+  allied: 'Allied',
+  opposed: 'Opposed',
 }
 
 /** Hex colours for canvas/WebGL use; keep in sync with the @theme tokens in index.css. */
 export const CATEGORY_HEX: Record<RsoListCategory, string> = {
-  protected: '#06b6d4',
-  cooperative: '#34d399',
-  uncooperative: '#f59e0b',
+  owned: '#3b82f6',
+  allied: '#22c55e',
+  opposed: '#ef4444',
 }
 
 export const SEVERITY_HEX: Record<SeverityBand, string> = {

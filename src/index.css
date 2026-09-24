@@ -42,6 +42,11 @@
   --color-cooperative: #34d399;
   --color-uncooperative: #f59e0b;
 
+  /* RSO list categories (Solstice OS): Owned blue, Allied green, Opposed red. */
+  --color-owned: #3b82f6;
+  --color-allied: #22c55e;
+  --color-opposed: #ef4444;
+
   --color-sev-green: #22c55e;
   --color-sev-blue: #3b82f6;
   --color-sev-yellow: #eab308;
@@ -128,6 +133,10 @@
   --color-protected: #0891b2;
   --color-cooperative: #059669;
   --color-uncooperative: #d97706;
+
+  --color-owned: #2563eb;
+  --color-allied: #16a34a;
+  --color-opposed: #dc2626;
 
   --color-sev-green-ink: #15803d;
   --color-sev-blue-ink: #1d4ed8;

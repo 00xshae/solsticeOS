@@ -501,8 +501,8 @@
   "lists": [
     {
       "id": "LST-IND",
-      "name": "INDIAN PROTECTED FLEET",
-      "category": "protected",
+      "name": "OWNED ASSETS",
+      "category": "owned",
       "scope": "ORG",
       "memberIds": [
         "RSAT-2A",
@@ -515,8 +515,8 @@
     },
     {
       "id": "LST-COOP",
-      "name": "COOPERATIVE OPERATORS",
-      "category": "cooperative",
+      "name": "ALLIED PLATFORMS",
+      "category": "allied",
       "scope": "ORG",
       "memberIds": [
         "ISS",
@@ -527,8 +527,8 @@
     },
     {
       "id": "LST-UNCOOP",
-      "name": "UNCOOPERATIVE WATCH",
-      "category": "uncooperative",
+      "name": "ADVERSARY WATCH",
+      "category": "opposed",
       "scope": "ORG",
       "memberIds": [
         "OBJ-2026-118C",
@@ -544,7 +544,7 @@
     {
       "id": "LST-USR-SL16",
       "name": "SL-16 CLUSTER (ANALYST)",
-      "category": "uncooperative",
+      "category": "opposed",
       "scope": "USER",
       "memberIds": [
         "SL16-RB"
