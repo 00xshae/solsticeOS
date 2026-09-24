@@ -1,4 +1,5 @@
 import { RotateCcw, TriangleAlert } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
 import { conjunctions, maneuverSequences } from '@/data'
 import { cn } from '@/lib/cn'
 import { burnSecondsPerMps, propellantForDeltaV } from '@/lib/propulsion'
@@ -48,7 +49,8 @@ function PlanImpact({ objectId }: { objectId: string }) {
 
 export function ManeuverEnvelopeEditor({ object }: { object: RSOObject }) {
   const base = object.envelope
-  const effective = useMissionStore((s) => selectEffectiveEnvelope(s, object.id))
+  // Merged envelope is a fresh object per call; compare field-by-field to avoid a render loop.
+  const effective = useMissionStore(useShallow((s) => selectEffectiveEnvelope(s, object.id)))
   const overrides = useMissionStore((s) => s.envelopeOverrides[object.id])
   const setEnvelopeOverride = useMissionStore((s) => s.setEnvelopeOverride)
   const resetEnvelope = useMissionStore((s) => s.resetEnvelope)
