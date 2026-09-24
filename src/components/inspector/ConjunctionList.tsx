@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn'
 import { formatCountdown, formatKm, formatPc } from '@/lib/format'
 import { SeverityBadge } from '@/components/ui/Badge'
 import { useDisplayMinute, useSeverity } from '@/hooks/useSeverity'
+import { isConjunctionOpen } from '@/lib/severity'
 import { selectSeverity, useMissionStore } from '@/store/missionStore'
 import type { ConjunctionEvent } from '@/types'
 
@@ -36,7 +37,7 @@ function ConjunctionRow({ event }: { event: ConjunctionEvent }) {
           active ? 'border-protected bg-protected/10' : 'border-transparent hover:bg-panel-raised',
         )}
       >
-        <SeverityBadge index={severity.index} />
+        <SeverityBadge index={severity.index} muted={!isConjunctionOpen(event, minute * 60_000)} />
         <div className="min-w-0">
           <div className="truncate text-[12px] text-protected">{primary?.name}</div>
           <div className="truncate text-[12px] text-uncooperative">{secondary?.name}</div>

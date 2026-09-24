@@ -32,14 +32,27 @@ const BAND_CLASS: Record<SeverityBand, string> = {
   red: 'bg-sev-red',
 }
 
-/** Rounded 0-100 index tile in its severity band colour. */
-export function SeverityBadge({ index, size = 'sm', className }: { index: number; size?: 'sm' | 'lg'; className?: string }) {
+/**
+ * Rounded 0-100 index tile in its severity band colour. `muted` greys it out, e.g. once a
+ * conjunction window has closed.
+ */
+export function SeverityBadge({
+  index,
+  size = 'sm',
+  muted = false,
+  className,
+}: {
+  index: number
+  size?: 'sm' | 'lg'
+  muted?: boolean
+  className?: string
+}) {
   return (
     <span
       className={cn(
         'inline-grid place-items-center rounded font-mono font-semibold tabular-nums text-white',
         size === 'sm' ? 'h-6 min-w-7 px-1 text-xs' : 'h-12 min-w-12 px-2 text-2xl',
-        BAND_CLASS[severityBand(index)],
+        muted ? 'bg-panel-raised text-ink-faint' : BAND_CLASS[severityBand(index)],
         className,
       )}
     >

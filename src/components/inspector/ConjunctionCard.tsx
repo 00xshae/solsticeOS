@@ -7,6 +7,7 @@ import {
   computeSeverity,
   DEFAULT_SEVERITY_CONFIG,
   describeSeverity,
+  isConjunctionOpen,
   SEVERITY_FACTORS,
 } from '@/lib/severity'
 import { CategoryChip, SeverityBadge } from '@/components/ui/Badge'
@@ -114,6 +115,7 @@ function AssessmentHistory({ event }: { event: ConjunctionEvent }) {
 export function ConjunctionCard({ event }: { event: ConjunctionEvent }) {
   const breakdown = useSeverity(event)
   const minute = useDisplayMinute()
+  const closed = !isConjunctionOpen(event, minute * 60_000)
   const selectConjunction = useMissionStore((s) => s.selectConjunction)
   const screeningKm = useMissionStore((s) => selectScreeningRadiusKm(s, event))
   const primary = rsoById.get(event.primaryId)
@@ -124,12 +126,14 @@ export function ConjunctionCard({ event }: { event: ConjunctionEvent }) {
   return (
     <div className="border-b border-line" style={{ boxShadow: `inset 3px 0 0 ${color}` }}>
       <div className="flex items-center gap-3 px-3 py-3" style={{ backgroundColor: `${color}14` }}>
-        <SeverityBadge index={breakdown.index} size="lg" />
+        <SeverityBadge index={breakdown.index} size="lg" muted={closed} />
         <div className="flex-1">
           <div className="font-mono text-lg font-semibold tabular-nums" style={{ color }}>
             {Math.round(breakdown.index)}/100
           </div>
-          <div className="font-mono text-[9px] uppercase tracking-widest text-ink-faint">Conjunction Severity Index</div>
+          <div className="font-mono text-[9px] uppercase tracking-widest text-ink-faint">
+            {closed ? 'Window closed · pair has cleared TCA' : 'Conjunction Severity Index'}
+          </div>
         </div>
         <button
           type="button"
