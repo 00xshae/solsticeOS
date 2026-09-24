@@ -41,8 +41,9 @@ function PlanImpact({ objectId }: { objectId: string }) {
     .map(Number) as [number, number]
   if (!total) return null
   return (
-    <p className={cn('font-mono text-[11px]', feasible < total ? 'text-sev-orange' : 'text-sev-green')}>
-      {feasible} of {total} COLA plans within envelope
+    <p className={cn('text-[11px] font-medium', feasible < total ? 'text-sev-orange-ink' : 'text-sev-green-ink')}>
+      <span className="font-mono tabular-nums">{feasible}</span> of <span className="font-mono tabular-nums">{total}</span> COLA plans
+      within envelope
     </p>
   )
 }
@@ -59,8 +60,8 @@ export function ManeuverEnvelopeEditor({ object }: { object: RSOObject }) {
     return (
       <Section title="Maneuver envelope">
         <div className="space-y-3 px-3 py-3">
-          <p className="flex gap-2 text-[12px] text-ink-muted">
-            <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-sev-yellow" />
+          <p className="flex gap-2 text-[12px] leading-relaxed text-secondary">
+            <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-sev-yellow-ink" />
             No propulsion on record. This object cannot execute collision avoidance, so its conjunctions
             are monitor-only.
           </p>
@@ -83,7 +84,7 @@ export function ManeuverEnvelopeEditor({ object }: { object: RSOObject }) {
           <button
             type="button"
             onClick={() => resetEnvelope(object.id)}
-            className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-ink-faint hover:text-ink"
+            className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-tertiary transition-colors duration-100 hover:bg-elevated hover:text-primary"
           >
             <RotateCcw className="size-3" /> Reset
           </button>
@@ -137,13 +138,13 @@ export function ManeuverEnvelopeEditor({ object }: { object: RSOObject }) {
         />
         <ScreeningRadiusSlider />
 
-        <div className="grid grid-cols-3 gap-3 rounded border border-line bg-void/60 p-2">
-          <Field label="Propulsion" value={effective.propulsion} />
+        <div className="grid grid-cols-3 gap-3 rounded-lg border border-border bg-base/60 p-2.5">
+          <Field label="Propulsion" value={effective.propulsion} mono={false} />
           <Field label="Propellant" value={`${propellantKg.toFixed(propellantKg < 10 ? 2 : 1)} kg`} />
           <Field label="Burn / 1 m/s" value={`${burnSecondsPerMps(effective).toFixed(0)} s`} />
         </div>
         <PlanImpact objectId={object.id} />
-        <p className="font-mono text-[10px] text-ink-faint">Overrides stay local to this analyst session.</p>
+        <p className="text-[10px] text-tertiary">Overrides stay local to this analyst session.</p>
       </div>
     </Section>
   )
