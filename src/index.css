@@ -41,39 +41,38 @@
   --color-border: rgb(255 255 255 / 0.06);
   --color-border-subtle: rgb(255 255 255 / 0.04);
   --color-border-strong: rgb(255 255 255 / 0.1);
-  --color-border-focus: rgb(184 190 196 / 0.45);
+  --color-border-focus: rgb(91 155 209 / 0.5);
 
   --color-primary: #fafaf9;
   --color-secondary: #a8a29e;
   --color-tertiary: #78716c;
   --color-disabled: #44403c;
 
-  /* Accent is a brushed-titanium neutral, not a hue — interactive/selected states read through
-     brightness and weight, the way an instrument panel highlight does, not a brand colour.
-     Chroma is reserved for the severity/category system below, where it carries real meaning. */
-  --color-accent: #b8bec4;
-  --color-accent-hover: #d4d8dc;
-  --color-accent-muted: rgb(184 190 196 / 0.1);
-  --color-accent-glow: rgb(184 190 196 / 0.14);
-  --color-on-accent: #0a0a0a;
+  /* Accent: a confident signal-blue, not neon (down from the old #06b6d4's 91% saturation) but
+     with real chroma — a flat near-grey read as lifeless in practice. Kept out of the severity
+     ramp's exact hues so it still reads as "interactive", not "status". */
+  --color-accent: #5b9bd1;
+  --color-accent-hover: #78b0e0;
+  --color-accent-muted: rgb(91 155 209 / 0.14);
+  --color-accent-glow: rgb(91 155 209 / 0.18);
+  --color-on-accent: #08131c;
 
-  /* RSO list categories (Solstice OS): Owned blue, Allied green, Opposed red — desaturated to sit
-     quietly against titanium instead of reading as saturated primaries. */
-  --color-owned: #4a6b8c;
-  --color-allied: #4e7a5a;
-  --color-opposed: #9c5049;
+  /* RSO list categories (Solstice OS): Owned blue, Allied green, Opposed red. */
+  --color-owned: #3f7fb0;
+  --color-allied: #3e9b6f;
+  --color-opposed: #d14f4f;
 
-  --color-sev-green: #4e7a5a;
-  --color-sev-blue: #4a6b8c;
-  --color-sev-yellow: #c4a15e;
-  --color-sev-orange: #a66a42;
-  --color-sev-red: #9c5049;
+  --color-sev-green: #3e9b6f;
+  --color-sev-blue: #3f7fb0;
+  --color-sev-yellow: #d6a537;
+  --color-sev-orange: #d97a3f;
+  --color-sev-red: #d14f4f;
 
-  --color-sev-green-ink: #4e7a5a;
-  --color-sev-blue-ink: #4a6b8c;
-  --color-sev-yellow-ink: #c4a15e;
-  --color-sev-orange-ink: #a66a42;
-  --color-sev-red-ink: #9c5049;
+  --color-sev-green-ink: #3e9b6f;
+  --color-sev-blue-ink: #3f7fb0;
+  --color-sev-yellow-ink: #d6a537;
+  --color-sev-orange-ink: #d97a3f;
+  --color-sev-red-ink: #d14f4f;
 
   --animate-scrim-in: fade-in 200ms ease-out;
   --animate-dialog-in: dialog-in 200ms ease-out;
@@ -123,28 +122,28 @@
   --color-border: #e7e5e4;
   --color-border-subtle: #f5f5f4;
   --color-border-strong: #d6d3d1;
-  --color-border-focus: rgb(86 93 100 / 0.35);
+  --color-border-focus: rgb(47 111 168 / 0.4);
 
   --color-primary: #1c1917;
   --color-secondary: #57534e;
   --color-tertiary: #a8a29e;
   --color-disabled: #d6d3d1;
 
-  --color-accent: #565d64;
-  --color-accent-hover: #3e444a;
-  --color-accent-muted: rgb(86 93 100 / 0.08);
-  --color-accent-glow: rgb(86 93 100 / 0.1);
+  --color-accent: #2f6fa8;
+  --color-accent-hover: #245a8a;
+  --color-accent-muted: rgb(47 111 168 / 0.1);
+  --color-accent-glow: rgb(47 111 168 / 0.12);
   --color-on-accent: #ffffff;
 
-  --color-owned: #37516b;
-  --color-allied: #3a5c44;
-  --color-opposed: #733b36;
+  --color-owned: #2c5f87;
+  --color-allied: #2a7551;
+  --color-opposed: #a83636;
 
-  --color-sev-green-ink: #3a5c44;
-  --color-sev-blue-ink: #37516b;
-  --color-sev-yellow-ink: #7a6234;
-  --color-sev-orange-ink: #7a4b30;
-  --color-sev-red-ink: #733b36;
+  --color-sev-green-ink: #2a7551;
+  --color-sev-blue-ink: #2c5f87;
+  --color-sev-yellow-ink: #96751f;
+  --color-sev-orange-ink: #a2591f;
+  --color-sev-red-ink: #a83636;
 }
 
 /* Soft halo in the element's --glow colour; applied in dark mode only. */
