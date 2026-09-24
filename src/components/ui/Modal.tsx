@@ -49,7 +49,7 @@ export function Modal({
         )}
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h2 className="text-[12px] font-semibold uppercase tracking-widest text-primary">{title}</h2>
+          <h2 className="font-display text-[12px] font-semibold uppercase tracking-widest text-primary">{title}</h2>
           <button
             type="button"
             onClick={onClose}

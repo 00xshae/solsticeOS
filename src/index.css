@@ -1,5 +1,5 @@
-@import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource/rajdhani/400.css';
 @import '@fontsource/rajdhani/500.css';
 @import '@fontsource/rajdhani/600.css';
 @import '@fontsource/rajdhani/700.css';
@@ -20,12 +20,12 @@
 @custom-variant light (&:where(:root.light, :root.light *));
 
 @theme {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Two-font system: Conthrax for headings (wordmark, nav, panel/page titles, dialog titles),
+     Rajdhani everywhere else it pairs with. JetBrains Mono stays separate for tabular/numeric
+     readouts — that's a functional distinction, not a stylistic one. */
+  --font-sans: 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
-  --font-display: 'Conthrax', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  /* Chrome voice: nav tabs, section kickers, page headers — anything that sits next to the
-     Conthrax wordmark and should read as the same control-room language, not body copy. */
-  --font-nav: 'Rajdhani', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Conthrax', 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
 
   /* Surfaces, back to front. Base carries a whisper of cyan so dark mode reads as deep graphite,
      not a flat black rectangle; surface/elevated/overlay stay neutral so severity colours don't shift. */
