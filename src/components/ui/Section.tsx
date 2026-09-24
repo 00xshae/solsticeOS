@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
-/** Collapsible inspector section with a mono uppercase title. */
+/** Collapsible inspector section; the body fades in when opened. */
 export function Section({
   title,
   aside,
@@ -16,20 +16,20 @@ export function Section({
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <section className="border-b border-line">
-      <div className="flex items-center gap-2 bg-panel-raised/40 px-3 py-2">
+    <section className="border-b border-border">
+      <div className="flex items-center gap-2 bg-section px-3 py-2">
         <button
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="flex flex-1 items-center gap-1.5 text-left font-mono text-[11px] font-semibold uppercase tracking-widest text-ink-muted hover:text-ink"
+          className="flex flex-1 items-center gap-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-secondary transition-colors duration-150 hover:text-primary"
         >
-          <ChevronDown className={cn('size-3.5 transition-transform', !open && '-rotate-90')} />
+          <ChevronDown className={cn('size-3.5 transition-transform duration-200 ease-in-out', !open && '-rotate-90')} />
           {title}
         </button>
         {aside}
       </div>
-      {open && children}
+      {open && <div className="animate-section-in">{children}</div>}
     </section>
   )
 }
@@ -38,8 +38,8 @@ export function Section({
 export function Field({ label, value, mono = true }: { label: string; value: ReactNode; mono?: boolean }) {
   return (
     <div className="min-w-0">
-      <div className="font-mono text-[9px] uppercase tracking-widest text-ink-faint">{label}</div>
-      <div className={cn('truncate text-[13px] text-ink', mono && 'font-mono tabular-nums')}>{value ?? '—'}</div>
+      <div className="text-[9px] font-medium uppercase tracking-widest text-tertiary">{label}</div>
+      <div className={cn('truncate text-[13px] text-primary', mono && 'font-mono font-medium tabular-nums')}>{value ?? '—'}</div>
     </div>
   )
 }
