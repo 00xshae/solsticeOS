@@ -4,6 +4,7 @@ import {
   initialMissionState,
   rsoCategories,
   selectActiveSequence,
+  selectAggregateSeverity,
   selectConjunctionsBySeverity,
   selectDisplayTimeMs,
   selectEffectiveEnvelope,
@@ -64,6 +65,13 @@ describe('conjunction selection', () => {
   it('has no default sequence for a monitor-only conjunction', () => {
     state().selectConjunction('CJ-004')
     expect(state().activeSequenceId).toBeNull()
+  })
+
+  it('aggregates per object with the screening-radius override', () => {
+    const before = selectAggregateSeverity(state(), 'RSAT-2A', 'vulnerable')!.index
+    state().setScreeningRadius(1)
+    expect(selectAggregateSeverity(state(), 'RSAT-2A', 'vulnerable')!.index).toBeLessThan(before)
+    expect(selectAggregateSeverity(state(), 'SL16-RB', 'endangering')?.conjunctionIds).toEqual(['CJ-001'])
   })
 
   it('ranks the hero conjunction first', () => {

@@ -5,7 +5,7 @@
 // should be wrapped with useShallow or useMemo in components.
 import { create } from 'zustand'
 import { conjunctionById, conjunctions, DEMO_EPOCH_MS, rsoById, rsoLists, rsoObjects, sequenceById } from '@/data'
-import { computeSeverity } from '@/lib/severity'
+import { aggregateSeverity, computeSeverity } from '@/lib/severity'
 import type {
   CatalogSegment,
   ConjunctionEvent,
@@ -194,6 +194,14 @@ export function selectSeverity(s: MissionState, event: ConjunctionEvent): Severi
     { ...event, screeningRadiusKm: selectScreeningRadiusKm(s, event) },
     selectDisplayTimeMs(s),
   )
+}
+
+/** Worst open conjunction for an object, honouring the screening-radius override. */
+export function selectAggregateSeverity(s: MissionState, objectId: string, role: 'vulnerable' | 'endangering') {
+  const events = s.screeningRadiusOverrideKm === null
+    ? conjunctions
+    : conjunctions.map((e) => ({ ...e, screeningRadiusKm: s.screeningRadiusOverrideKm! }))
+  return aggregateSeverity(objectId, role, events, selectDisplayTimeMs(s))
 }
 
 export function selectConjunctionsBySeverity(s: MissionState) {
