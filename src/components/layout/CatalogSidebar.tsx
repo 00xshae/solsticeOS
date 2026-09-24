@@ -124,14 +124,14 @@ export function CatalogSidebar() {
         <label className="relative block">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-ink-faint" />
           <input
-            type="search"
+            type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && results[0]) selectRso(results[0].id)
               if (e.key === 'Escape') setSearchQuery('')
             }}
-            placeholder="Search name, NORAD or COSPAR to add"
+            placeholder="Search RSOs to add…"
             className="w-full rounded border border-line bg-void py-1.5 pl-8 pr-8 text-sm text-ink placeholder:text-ink-faint focus:border-protected focus:outline-none"
           />
           {searchQuery && (
