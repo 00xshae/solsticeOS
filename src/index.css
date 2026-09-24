@@ -1,8 +1,5 @@
 @import '@fontsource-variable/jetbrains-mono';
-@import '@fontsource/rajdhani/400.css';
-@import '@fontsource/rajdhani/500.css';
-@import '@fontsource/rajdhani/600.css';
-@import '@fontsource/rajdhani/700.css';
+@import '@fontsource-variable/ibm-plex-sans';
 @import 'tailwindcss';
 
 @font-face {
@@ -21,14 +18,17 @@
 
 @theme {
   /* Two-font system: Conthrax for headings (wordmark, nav, panel/page titles, dialog titles),
-     Rajdhani everywhere else it pairs with. JetBrains Mono stays separate for tabular/numeric
-     readouts — that's a functional distinction, not a stylistic one. */
-  --font-sans: 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
+     IBM Plex Sans everywhere else — chosen for its quiet, engineering-grade legibility at small
+     UI sizes (11-13px labels, dense tables) without the generic "AI dashboard" look of Inter or
+     the condensed cramp of Rajdhani. JetBrains Mono stays separate for tabular/numeric readouts —
+     that's a functional distinction, not a stylistic one. */
+  --font-sans: 'IBM Plex Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
-  --font-display: 'Conthrax', 'Rajdhani', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Conthrax', 'IBM Plex Sans Variable', ui-sans-serif, system-ui, sans-serif;
 
-  /* Surfaces, back to front. Base carries a whisper of cyan so dark mode reads as deep graphite,
-     not a flat black rectangle; surface/elevated/overlay stay neutral so severity colours don't shift. */
+  /* Surfaces, back to front. Base carries a whisper of graphite-cool so dark mode reads as deep
+     titanium, not a flat black rectangle; surface/elevated/overlay stay neutral so severity
+     colours don't shift. */
   --color-base: #07090b;
   --color-surface: #0a0a0a;
   --color-elevated: #141414;
@@ -41,35 +41,39 @@
   --color-border: rgb(255 255 255 / 0.06);
   --color-border-subtle: rgb(255 255 255 / 0.04);
   --color-border-strong: rgb(255 255 255 / 0.1);
-  --color-border-focus: rgb(6 182 212 / 0.5);
+  --color-border-focus: rgb(184 190 196 / 0.45);
 
   --color-primary: #fafaf9;
   --color-secondary: #a8a29e;
   --color-tertiary: #78716c;
   --color-disabled: #44403c;
 
-  --color-accent: #06b6d4;
-  --color-accent-hover: #22d3ee;
-  --color-accent-muted: rgb(6 182 212 / 0.12);
-  --color-accent-glow: rgb(6 182 212 / 0.15);
-  --color-on-accent: #000000;
+  /* Accent is a brushed-titanium neutral, not a hue — interactive/selected states read through
+     brightness and weight, the way an instrument panel highlight does, not a brand colour.
+     Chroma is reserved for the severity/category system below, where it carries real meaning. */
+  --color-accent: #b8bec4;
+  --color-accent-hover: #d4d8dc;
+  --color-accent-muted: rgb(184 190 196 / 0.1);
+  --color-accent-glow: rgb(184 190 196 / 0.14);
+  --color-on-accent: #0a0a0a;
 
-  /* RSO list categories (Solstice OS): Owned blue, Allied green, Opposed red. */
-  --color-owned: #3b82f6;
-  --color-allied: #22c55e;
-  --color-opposed: #ef4444;
+  /* RSO list categories (Solstice OS): Owned blue, Allied green, Opposed red — desaturated to sit
+     quietly against titanium instead of reading as saturated primaries. */
+  --color-owned: #4a6b8c;
+  --color-allied: #4e7a5a;
+  --color-opposed: #9c5049;
 
-  --color-sev-green: #22c55e;
-  --color-sev-blue: #3b82f6;
-  --color-sev-yellow: #eab308;
-  --color-sev-orange: #f97316;
-  --color-sev-red: #ef4444;
+  --color-sev-green: #4e7a5a;
+  --color-sev-blue: #4a6b8c;
+  --color-sev-yellow: #c4a15e;
+  --color-sev-orange: #a66a42;
+  --color-sev-red: #9c5049;
 
-  --color-sev-green-ink: #22c55e;
-  --color-sev-blue-ink: #3b82f6;
-  --color-sev-yellow-ink: #eab308;
-  --color-sev-orange-ink: #f97316;
-  --color-sev-red-ink: #ef4444;
+  --color-sev-green-ink: #4e7a5a;
+  --color-sev-blue-ink: #4a6b8c;
+  --color-sev-yellow-ink: #c4a15e;
+  --color-sev-orange-ink: #a66a42;
+  --color-sev-red-ink: #9c5049;
 
   --animate-scrim-in: fade-in 200ms ease-out;
   --animate-dialog-in: dialog-in 200ms ease-out;
@@ -119,28 +123,28 @@
   --color-border: #e7e5e4;
   --color-border-subtle: #f5f5f4;
   --color-border-strong: #d6d3d1;
-  --color-border-focus: rgb(6 182 212 / 0.4);
+  --color-border-focus: rgb(86 93 100 / 0.35);
 
   --color-primary: #1c1917;
   --color-secondary: #57534e;
   --color-tertiary: #a8a29e;
   --color-disabled: #d6d3d1;
 
-  --color-accent: #0891b2;
-  --color-accent-hover: #06b6d4;
-  --color-accent-muted: rgb(8 145 178 / 0.08);
-  --color-accent-glow: rgb(8 145 178 / 0.1);
+  --color-accent: #565d64;
+  --color-accent-hover: #3e444a;
+  --color-accent-muted: rgb(86 93 100 / 0.08);
+  --color-accent-glow: rgb(86 93 100 / 0.1);
   --color-on-accent: #ffffff;
 
-  --color-owned: #2563eb;
-  --color-allied: #16a34a;
-  --color-opposed: #dc2626;
+  --color-owned: #37516b;
+  --color-allied: #3a5c44;
+  --color-opposed: #733b36;
 
-  --color-sev-green-ink: #15803d;
-  --color-sev-blue-ink: #1d4ed8;
-  --color-sev-yellow-ink: #a16207;
-  --color-sev-orange-ink: #c2410c;
-  --color-sev-red-ink: #dc2626;
+  --color-sev-green-ink: #3a5c44;
+  --color-sev-blue-ink: #37516b;
+  --color-sev-yellow-ink: #7a6234;
+  --color-sev-orange-ink: #7a4b30;
+  --color-sev-red-ink: #733b36;
 }
 
 /* Soft halo in the element's --glow colour; applied in dark mode only. */
@@ -167,10 +171,11 @@ body {
   position: relative;
 }
 
-/* Soft cyan bloom top-center fading into the deep-graphite base, so dark mode reads as a lit
-   control room rather than a flat rectangle. Light mode stays clean/paper-like. */
+/* Soft titanium bloom top-center fading into the deep-graphite base, so dark mode reads as a lit
+   instrument panel rather than a flat rectangle. Neutral on purpose — no colour cast. Light mode
+   stays clean/paper-like. */
 :root:not(.light) body {
-  background-image: radial-gradient(ellipse 1200px 600px at 50% -10%, rgb(6 182 212 / 0.05), transparent 60%);
+  background-image: radial-gradient(ellipse 1200px 600px at 50% -10%, rgb(255 255 255 / 0.028), transparent 60%);
 }
 
 /* Filmic grain: fixed, non-interactive noise over the whole app. Subtle on purpose — texture,
