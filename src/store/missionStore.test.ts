@@ -27,9 +27,9 @@ beforeEach(() => store.setState(initialMissionState))
 
 describe('mission clock', () => {
   it('advances by real time times the speed multiplier while playing', () => {
-    state().setSpeed(60)
+    state().setSpeed(100)
     state().tick(1000)
-    expect(state().simTimeMs).toBe(DEMO_EPOCH_MS + 60_000)
+    expect(state().simTimeMs).toBe(DEMO_EPOCH_MS + 100_000)
   })
 
   it('holds while paused', () => {
@@ -139,8 +139,8 @@ describe('threat log', () => {
 
   it('reassesses on each new mission-clock hour', () => {
     const before = state().threatLog.length
-    state().setSpeed(60)
-    state().tick(30 * 60_000) // 30 h of mission time in one tick
+    state().setSpeed(100)
+    state().tick(30 * 36_000) // 30 h of mission time in one tick
     expect(state().lastAssessedHour).toBe(Math.floor(state().simTimeMs / 3_600_000))
     expect(state().threatLog.length).toBeGreaterThan(before)
     expect(state().threatLog[0]!.reason).toBe('REASSESSED')

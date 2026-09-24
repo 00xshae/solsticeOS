@@ -45,7 +45,7 @@ import type {
   ThreatWindow,
 } from '@/types'
 
-export type SpeedMultiplier = 1 | 10 | 60
+export type SpeedMultiplier = 10 | 100 | 1000
 export type ColaStatus = 'PLANNING' | 'COMMITTED'
 export type AppView = 'globe' | 'lists'
 
@@ -175,7 +175,7 @@ function seedThreatLog(): LogState {
 export const initialMissionState: MissionState = {
   simTimeMs: DEMO_EPOCH_MS,
   playing: true,
-  speed: 1,
+  speed: 10,
   view: 'globe',
   openListId: null,
   lists: rsoLists,
