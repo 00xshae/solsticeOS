@@ -125,6 +125,15 @@ describe('manoeuvre envelope editor', () => {
   })
 })
 
+describe('camera follow', () => {
+  it('toggles and resets with the demo', () => {
+    state().toggleFollow()
+    expect(state().followSelected).toBe(true)
+    state().resetDemo()
+    expect(state().followSelected).toBe(false)
+  })
+})
+
 describe('COLA response', () => {
   it('commits only with an active plan and reopens planning on a new selection', () => {
     state().commitCola()
