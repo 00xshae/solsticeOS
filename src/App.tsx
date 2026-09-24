@@ -4,7 +4,7 @@ import { CatalogSidebar } from '@/components/layout/CatalogSidebar'
 import { Header } from '@/components/layout/Header'
 import { GlobeViewport } from '@/components/globe/GlobeViewport'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
-import { ManeuverTimeline } from '@/components/timeline/ManeuverTimeline'
+import { TimelineDock } from '@/components/timeline/TimelineDock'
 import { useMissionClock } from '@/hooks/useMissionClock'
 import { useApplyTheme } from '@/store/themeStore'
 
@@ -18,7 +18,7 @@ export default function App() {
         <CatalogSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <GlobeViewport />
-          <ManeuverTimeline />
+          <TimelineDock />
         </div>
         <InspectorPanel />
       </div>

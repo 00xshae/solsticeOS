@@ -3,7 +3,7 @@ import { Crosshair, Pause, Play, Radio, TriangleAlert } from 'lucide-react'
 import { rsoById, sequenceById } from '@/data'
 import { cn } from '@/lib/cn'
 import { formatCountdown, formatKm, formatUtc } from '@/lib/format'
-import { deltaVSpentMps, isBurn, maneuveredElementsAt, separationFromNominalKm, stepAt } from '@/lib/maneuver'
+import { deltaVSpentMps, isBurn, maneuveredElementsAt, separationFromNominalKm, stepAt, type StepPlan } from '@/lib/maneuver'
 import { propagateEci } from '@/lib/orbit'
 import { fracToTime, layoutTimeline, timeToFrac } from '@/lib/timeline'
 import {
@@ -71,7 +71,7 @@ function CoaTabs({ event }: { event: ConjunctionEvent }) {
   )
 }
 
-function Readout({ label, value, tone }: { label: string; value: string; tone?: string }) {
+export function Readout({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div>
       <div className="font-mono text-[9px] uppercase tracking-widest text-ink-faint">{label}</div>
@@ -104,14 +104,15 @@ function Readouts({ event, sequence }: { event: ConjunctionEvent; sequence: Mane
   )
 }
 
-function Track({ event, sequence }: { event: ConjunctionEvent; sequence: ManeuverSequence }) {
-  const layout = useMemo(() => layoutTimeline(sequence), [sequence])
+/** Scrubbable 5-stage track with a key-time marker (TCA for COLA, arrival for an intercept). */
+export function Track({ plan, markerMs, markerLabel }: { plan: StepPlan; markerMs: number; markerLabel: string }) {
+  const layout = useMemo(() => layoutTimeline(plan), [plan])
   const trackRef = useRef<HTMLDivElement>(null)
   const scrubTo = useMissionStore((s) => s.scrubTo)
   const scrubbing = useMissionStore((s) => s.scrubTimeMs !== null)
   const displayFrac = useMissionStore((s) => timeToFrac(layout, selectDisplayTimeMs(s)))
   const clockFrac = useMissionStore((s) => timeToFrac(layout, s.simTimeMs))
-  const tcaFrac = timeToFrac(layout, Date.parse(event.tca))
+  const markerFrac = timeToFrac(layout, markerMs)
 
   const scrubFromPointer = (e: PointerEvent) => {
     const rect = trackRef.current!.getBoundingClientRect()
@@ -156,7 +157,7 @@ function Track({ event, sequence }: { event: ConjunctionEvent; sequence: Maneuve
         ))}
       </div>
 
-      <Marker frac={tcaFrac} className="bg-sev-red" label="TCA" labelClass="text-sev-red" />
+      <Marker frac={markerFrac} className="bg-sev-red" label={markerLabel} labelClass="text-sev-red" />
       {clockFrac > 0 && clockFrac < 1 && (
         <Marker frac={clockFrac} className="bg-cooperative/70" label="NOW" labelClass="text-cooperative" />
       )}
@@ -179,7 +180,7 @@ function Marker({ frac, className, label, labelClass }: { frac: number; classNam
   )
 }
 
-function Controls({ sequence }: { sequence: ManeuverSequence }) {
+export function Controls({ sequence }: { sequence: StepPlan }) {
   const scrubTo = useMissionStore((s) => s.scrubTo)
   const live = useMissionStore((s) => s.scrubTimeMs === null)
   const followSelected = useMissionStore((s) => s.followSelected)
@@ -247,7 +248,7 @@ export function ManeuverTimeline() {
     return (
       <Shell>
         <p className="py-6 text-center font-mono text-[11px] uppercase tracking-widest text-ink-faint">
-          Select a conjunction window to plan a collision-avoidance manoeuvre
+          Select a threat window or conjunction window to see its manoeuvre sequence
         </p>
       </Shell>
     )
@@ -267,20 +268,26 @@ export function ManeuverTimeline() {
     <Shell aside={<Controls key={sequence.id} sequence={sequence} />}>
       <div className="space-y-3">
         <CoaTabs event={event} />
-        <Track event={event} sequence={sequence} />
+        <Track plan={sequence} markerMs={Date.parse(event.tca)} markerLabel="TCA" />
         <Readouts event={event} sequence={sequence} />
       </div>
     </Shell>
   )
 }
 
-function Shell({ aside, children }: { aside?: ReactNode; children: ReactNode }) {
+export function Shell({
+  aside,
+  children,
+  title = 'COLA manoeuvre sequence',
+}: {
+  aside?: ReactNode
+  children: ReactNode
+  title?: string
+}) {
   return (
-    <section className="shrink-0 border-t border-line bg-panel px-4 py-3" aria-label="COLA manoeuvre timeline">
+    <section className="shrink-0 border-t border-line bg-panel px-4 py-3" aria-label={`${title} timeline`}>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-widest text-ink-muted">
-          COLA manoeuvre sequence
-        </h2>
+        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-widest text-ink-muted">{title}</h2>
         {aside}
       </div>
       {children}
