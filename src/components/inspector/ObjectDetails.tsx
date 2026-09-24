@@ -16,13 +16,13 @@ export function ObjectDetails({ object }: { object: RSOObject }) {
 
   return (
     <>
-      <div className="flex items-start justify-between gap-3 border-b border-line px-3 py-3">
+      <div className="flex items-start justify-between gap-3 border-b border-border px-3 py-3">
         <div className="min-w-0">
           <div className="flex items-baseline gap-2">
-            <h2 className="truncate text-sm font-semibold text-ink">{object.name}</h2>
-            <span className="font-mono text-[10px] text-ink-faint">NORAD {object.noradId}</span>
+            <h2 className="truncate text-[13px] font-semibold text-primary">{object.name}</h2>
+            <span className="shrink-0 font-mono text-[11px] tabular-nums text-tertiary">NORAD {object.noradId}</span>
           </div>
-          <div className="mt-1 flex flex-wrap gap-1">
+          <div className="mt-1.5 flex flex-wrap gap-1">
             {rsoCategories(object.id).map((c) => (
               <CategoryChip key={c} category={c} />
             ))}
@@ -32,7 +32,7 @@ export function ObjectDetails({ object }: { object: RSOObject }) {
           type="button"
           onClick={() => selectRso(null)}
           aria-label="Close object details"
-          className="text-ink-faint hover:text-ink"
+          className="rounded-md p-1 text-tertiary transition-colors duration-100 hover:bg-elevated hover:text-primary"
         >
           <X className="size-4" />
         </button>
@@ -40,17 +40,17 @@ export function ObjectDetails({ object }: { object: RSOObject }) {
 
       <div className="grid grid-cols-3 gap-3 px-3 py-3">
         <Field label="Type" value={SEGMENT_LABEL[object.segment]} mono={false} />
-        <Field label="Country" value={object.country} />
-        <Field label="RCS" value={object.rcs} />
+        <Field label="Country" value={object.country} mono={false} />
+        <Field label="RCS" value={object.rcs} mono={false} />
       </div>
 
       <Section title="More details" defaultOpen={false}>
         <div className="grid grid-cols-3 gap-3 px-3 py-3">
           <Field label="COSPAR ID" value={object.cosparId} />
           <Field label="Launch" value={date(object.launchDate)} />
-          <Field label="Site" value={object.launchSite} />
+          <Field label="Site" value={object.launchSite} mono={false} />
           <Field label="Operator" value={object.operator} mono={false} />
-          <Field label="Ops status" value={object.opsStatus.replace('_', '-')} />
+          <Field label="Ops status" value={object.opsStatus.replace('_', '-')} mono={false} />
           <Field label="TLE age" value={`${object.tleAgeHours.toFixed(1)} h`} />
           <Field label="SMA" value={`${el.smaKm.toFixed(1)} km`} />
           <Field label="ECC" value={el.ecc.toFixed(6)} />
