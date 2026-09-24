@@ -15,8 +15,23 @@
       "launchSite": "SDSC-SHAR",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 6,
-      "elements": { "epoch": "2026-10-01T00:00:00Z", "smaKm": 7195.1, "ecc": 0.0012, "incDeg": 98.69, "raanDeg": 110.4, "argpDeg": 92.1, "meanAnomalyDeg": 268.0 },
-      "envelope": { "deltaVBudgetMps": 60, "deltaVRemainingMps": 18.4, "thrustN": 11, "ispS": 220, "massKg": 1235, "propulsion": "MONOPROP" }
+      "elements": {
+        "epoch": "2026-10-01T00:00:00Z",
+        "smaKm": 7195.1,
+        "ecc": 0.0012,
+        "incDeg": 98.69,
+        "raanDeg": 110.4,
+        "argpDeg": 92.1,
+        "meanAnomalyDeg": 268
+      },
+      "envelope": {
+        "deltaVBudgetMps": 60,
+        "deltaVRemainingMps": 18.4,
+        "thrustN": 11,
+        "ispS": 220,
+        "massKg": 1235,
+        "propulsion": "MONOPROP"
+      }
     },
     {
       "id": "PIXXEL-FF02",
@@ -31,8 +46,23 @@
       "launchSite": "VSFB",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 3.5,
-      "elements": { "epoch": "2026-10-01T02:30:00Z", "smaKm": 6906.1, "ecc": 0.0009, "incDeg": 97.49, "raanDeg": 204.2, "argpDeg": 81.5, "meanAnomalyDeg": 12.3 },
-      "envelope": { "deltaVBudgetMps": 120, "deltaVRemainingMps": 96, "thrustN": 1, "ispS": 230, "massKg": 50, "propulsion": "MONOPROP" }
+      "elements": {
+        "epoch": "2026-10-01T02:30:00Z",
+        "smaKm": 6906.1,
+        "ecc": 0.0009,
+        "incDeg": 97.49,
+        "raanDeg": 204.2,
+        "argpDeg": 81.5,
+        "meanAnomalyDeg": 12.3
+      },
+      "envelope": {
+        "deltaVBudgetMps": 120,
+        "deltaVRemainingMps": 96,
+        "thrustN": 1,
+        "ispS": 230,
+        "massKg": 50,
+        "propulsion": "MONOPROP"
+      }
     },
     {
       "id": "PIXXEL-TD2",
@@ -47,7 +77,15 @@
       "launchSite": "CCSFS",
       "opsStatus": "PARTIAL",
       "tleAgeHours": 9,
-      "elements": { "epoch": "2026-09-30T21:00:00Z", "smaKm": 6892.4, "ecc": 0.0011, "incDeg": 97.41, "raanDeg": 188.7, "argpDeg": 140.2, "meanAnomalyDeg": 219.8 },
+      "elements": {
+        "epoch": "2026-09-30T21:00:00Z",
+        "smaKm": 6892.4,
+        "ecc": 0.0011,
+        "incDeg": 97.41,
+        "raanDeg": 188.7,
+        "argpDeg": 140.2,
+        "meanAnomalyDeg": 219.8
+      },
       "envelope": null
     },
     {
@@ -63,8 +101,23 @@
       "launchSite": "VSFB",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 2,
-      "elements": { "epoch": "2026-10-01T04:00:00Z", "smaKm": 6888.1, "ecc": 0.0008, "incDeg": 97.43, "raanDeg": 203.9, "argpDeg": 66.0, "meanAnomalyDeg": 301.4 },
-      "envelope": { "deltaVBudgetMps": 150, "deltaVRemainingMps": 141, "thrustN": 0.015, "ispS": 1200, "massKg": 30, "propulsion": "ELECTRIC" }
+      "elements": {
+        "epoch": "2026-10-01T04:00:00Z",
+        "smaKm": 6888.1,
+        "ecc": 0.0008,
+        "incDeg": 97.43,
+        "raanDeg": 203.9,
+        "argpDeg": 66,
+        "meanAnomalyDeg": 301.4
+      },
+      "envelope": {
+        "deltaVBudgetMps": 150,
+        "deltaVRemainingMps": 141,
+        "thrustN": 0.015,
+        "ispS": 1200,
+        "massKg": 30,
+        "propulsion": "ELECTRIC"
+      }
     },
     {
       "id": "EOS-06",
@@ -79,8 +132,23 @@
       "launchSite": "SDSC-SHAR",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 5,
-      "elements": { "epoch": "2026-10-01T01:00:00Z", "smaKm": 7118.1, "ecc": 0.0010, "incDeg": 98.30, "raanDeg": 97.6, "argpDeg": 88.4, "meanAnomalyDeg": 45.9 },
-      "envelope": { "deltaVBudgetMps": 55, "deltaVRemainingMps": 31, "thrustN": 22, "ispS": 225, "massKg": 1117, "propulsion": "MONOPROP" }
+      "elements": {
+        "epoch": "2026-10-01T01:00:00Z",
+        "smaKm": 7118.1,
+        "ecc": 0.001,
+        "incDeg": 98.3,
+        "raanDeg": 97.6,
+        "argpDeg": 88.4,
+        "meanAnomalyDeg": 45.9
+      },
+      "envelope": {
+        "deltaVBudgetMps": 55,
+        "deltaVRemainingMps": 31,
+        "thrustN": 22,
+        "ispS": 225,
+        "massKg": 1117,
+        "propulsion": "MONOPROP"
+      }
     },
     {
       "id": "CARTOSAT-3",
@@ -95,8 +163,23 @@
       "launchSite": "SDSC-SHAR",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 4,
-      "elements": { "epoch": "2026-10-01T02:00:00Z", "smaKm": 6887.1, "ecc": 0.0010, "incDeg": 97.46, "raanDeg": 162.3, "argpDeg": 104.7, "meanAnomalyDeg": 177.2 },
-      "envelope": { "deltaVBudgetMps": 80, "deltaVRemainingMps": 42, "thrustN": 22, "ispS": 225, "massKg": 1625, "propulsion": "MONOPROP" }
+      "elements": {
+        "epoch": "2026-10-01T02:00:00Z",
+        "smaKm": 6887.1,
+        "ecc": 0.001,
+        "incDeg": 97.46,
+        "raanDeg": 162.3,
+        "argpDeg": 104.7,
+        "meanAnomalyDeg": 177.2
+      },
+      "envelope": {
+        "deltaVBudgetMps": 80,
+        "deltaVRemainingMps": 42,
+        "thrustN": 22,
+        "ispS": 225,
+        "massKg": 1625,
+        "propulsion": "MONOPROP"
+      }
     },
     {
       "id": "ISS",
@@ -111,8 +194,23 @@
       "launchSite": "TTMTR",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 1.5,
-      "elements": { "epoch": "2026-10-01T04:30:00Z", "smaKm": 6796.1, "ecc": 0.0005, "incDeg": 51.64, "raanDeg": 272.8, "argpDeg": 103.0, "meanAnomalyDeg": 12.6 },
-      "envelope": { "deltaVBudgetMps": 25, "deltaVRemainingMps": 14, "thrustN": 2940, "ispS": 300, "massKg": 420000, "propulsion": "BIPROP" }
+      "elements": {
+        "epoch": "2026-10-01T04:30:00Z",
+        "smaKm": 6796.1,
+        "ecc": 0.0005,
+        "incDeg": 51.64,
+        "raanDeg": 272.8,
+        "argpDeg": 103,
+        "meanAnomalyDeg": 12.6
+      },
+      "envelope": {
+        "deltaVBudgetMps": 25,
+        "deltaVRemainingMps": 14,
+        "thrustN": 2940,
+        "ispS": 300,
+        "massKg": 420000,
+        "propulsion": "BIPROP"
+      }
     },
     {
       "id": "STARLINK-31044",
@@ -127,8 +225,23 @@
       "launchSite": "AFETR",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 2.5,
-      "elements": { "epoch": "2026-10-01T03:30:00Z", "smaKm": 6928.1, "ecc": 0.0001, "incDeg": 53.05, "raanDeg": 318.4, "argpDeg": 90.0, "meanAnomalyDeg": 244.1 },
-      "envelope": { "deltaVBudgetMps": 500, "deltaVRemainingMps": 410, "thrustN": 0.17, "ispS": 2500, "massKg": 800, "propulsion": "ELECTRIC" }
+      "elements": {
+        "epoch": "2026-10-01T03:30:00Z",
+        "smaKm": 6928.1,
+        "ecc": 0.0001,
+        "incDeg": 53.05,
+        "raanDeg": 318.4,
+        "argpDeg": 90,
+        "meanAnomalyDeg": 244.1
+      },
+      "envelope": {
+        "deltaVBudgetMps": 500,
+        "deltaVRemainingMps": 410,
+        "thrustN": 0.17,
+        "ispS": 2500,
+        "massKg": 800,
+        "propulsion": "ELECTRIC"
+      }
     },
     {
       "id": "ICEYE-X36",
@@ -143,8 +256,23 @@
       "launchSite": "VSFB",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 7,
-      "elements": { "epoch": "2026-09-30T23:00:00Z", "smaKm": 6933.4, "ecc": 0.0012, "incDeg": 97.70, "raanDeg": 140.5, "argpDeg": 71.8, "meanAnomalyDeg": 318.0 },
-      "envelope": { "deltaVBudgetMps": 100, "deltaVRemainingMps": 72, "thrustN": 0.02, "ispS": 1100, "massKg": 100, "propulsion": "ELECTRIC" }
+      "elements": {
+        "epoch": "2026-09-30T23:00:00Z",
+        "smaKm": 6933.4,
+        "ecc": 0.0012,
+        "incDeg": 97.7,
+        "raanDeg": 140.5,
+        "argpDeg": 71.8,
+        "meanAnomalyDeg": 318
+      },
+      "envelope": {
+        "deltaVBudgetMps": 100,
+        "deltaVRemainingMps": 72,
+        "thrustN": 0.02,
+        "ispS": 1100,
+        "massKg": 100,
+        "propulsion": "ELECTRIC"
+      }
     },
     {
       "id": "LANDSAT-9",
@@ -159,8 +287,23 @@
       "launchSite": "VSFB",
       "opsStatus": "OPERATIONAL",
       "tleAgeHours": 8,
-      "elements": { "epoch": "2026-09-30T22:00:00Z", "smaKm": 7083.1, "ecc": 0.0001, "incDeg": 98.21, "raanDeg": 118.9, "argpDeg": 88.0, "meanAnomalyDeg": 150.3 },
-      "envelope": { "deltaVBudgetMps": 110, "deltaVRemainingMps": 88, "thrustN": 22, "ispS": 225, "massKg": 2711, "propulsion": "MONOPROP" }
+      "elements": {
+        "epoch": "2026-09-30T22:00:00Z",
+        "smaKm": 7083.1,
+        "ecc": 0.0001,
+        "incDeg": 98.21,
+        "raanDeg": 118.9,
+        "argpDeg": 88,
+        "meanAnomalyDeg": 150.3
+      },
+      "envelope": {
+        "deltaVBudgetMps": 110,
+        "deltaVRemainingMps": 88,
+        "thrustN": 22,
+        "ispS": 225,
+        "massKg": 2711,
+        "propulsion": "MONOPROP"
+      }
     },
     {
       "id": "OBJ-2026-118C",
@@ -175,7 +318,15 @@
       "launchSite": null,
       "opsStatus": "UNKNOWN",
       "tleAgeHours": 11,
-      "elements": { "epoch": "2026-09-30T19:00:00Z", "smaKm": 6888.9, "ecc": 0.0015, "incDeg": 97.31, "raanDeg": 161.8, "argpDeg": 250.3, "meanAnomalyDeg": 31.0 },
+      "elements": {
+        "epoch": "2026-09-30T19:00:00Z",
+        "smaKm": 6884.354,
+        "ecc": 0.0015,
+        "incDeg": 97.31,
+        "raanDeg": 162.01365,
+        "argpDeg": 309.36878,
+        "meanAnomalyDeg": 166.42565
+      },
       "envelope": null
     },
     {
@@ -191,7 +342,15 @@
       "launchSite": "TTMTR",
       "opsStatus": "NON_OPERATIONAL",
       "tleAgeHours": 14,
-      "elements": { "epoch": "2026-09-30T16:00:00Z", "smaKm": 7217.4, "ecc": 0.0013, "incDeg": 71.00, "raanDeg": 66.2, "argpDeg": 301.5, "meanAnomalyDeg": 58.4 },
+      "elements": {
+        "epoch": "2026-09-30T16:00:00Z",
+        "smaKm": 7188.318,
+        "ecc": 0.0013,
+        "incDeg": 71,
+        "raanDeg": 82.43765,
+        "argpDeg": 325.63003,
+        "meanAnomalyDeg": 115.26912
+      },
       "envelope": null
     },
     {
@@ -207,7 +366,15 @@
       "launchSite": "JSC",
       "opsStatus": "NON_OPERATIONAL",
       "tleAgeHours": 18,
-      "elements": { "epoch": "2026-09-30T12:00:00Z", "smaKm": 7121.1, "ecc": 0.0040, "incDeg": 98.50, "raanDeg": 99.1, "argpDeg": 12.8, "meanAnomalyDeg": 347.6 },
+      "elements": {
+        "epoch": "2026-09-30T12:00:00Z",
+        "smaKm": 7121.876,
+        "ecc": 0.004,
+        "incDeg": 98.5,
+        "raanDeg": 96.70973,
+        "argpDeg": 238.87134,
+        "meanAnomalyDeg": 343.45235
+      },
       "envelope": null
     },
     {
@@ -223,7 +390,15 @@
       "launchSite": "PKMTR",
       "opsStatus": "NON_OPERATIONAL",
       "tleAgeHours": 20,
-      "elements": { "epoch": "2026-09-30T10:00:00Z", "smaKm": 7148.1, "ecc": 0.0021, "incDeg": 82.94, "raanDeg": 12.7, "argpDeg": 188.4, "meanAnomalyDeg": 171.2 },
+      "elements": {
+        "epoch": "2026-09-30T10:00:00Z",
+        "smaKm": 7148.1,
+        "ecc": 0.0021,
+        "incDeg": 82.94,
+        "raanDeg": 12.7,
+        "argpDeg": 188.4,
+        "meanAnomalyDeg": 171.2
+      },
       "envelope": null
     },
     {
@@ -239,7 +414,15 @@
       "launchSite": "TSC",
       "opsStatus": "NON_OPERATIONAL",
       "tleAgeHours": 26,
-      "elements": { "epoch": "2026-09-30T04:00:00Z", "smaKm": 7188.4, "ecc": 0.0061, "incDeg": 98.81, "raanDeg": 131.5, "argpDeg": 44.2, "meanAnomalyDeg": 316.0 },
+      "elements": {
+        "epoch": "2026-09-30T04:00:00Z",
+        "smaKm": 7188.4,
+        "ecc": 0.0061,
+        "incDeg": 98.81,
+        "raanDeg": 131.5,
+        "argpDeg": 44.2,
+        "meanAnomalyDeg": 316
+      },
       "envelope": null
     },
     {
@@ -255,7 +438,15 @@
       "launchSite": "PKMTR",
       "opsStatus": "NON_OPERATIONAL",
       "tleAgeHours": 22,
-      "elements": { "epoch": "2026-09-30T08:00:00Z", "smaKm": 6903.2, "ecc": 0.0022, "incDeg": 82.58, "raanDeg": 22.9, "argpDeg": 98.6, "meanAnomalyDeg": 262.4 },
+      "elements": {
+        "epoch": "2026-09-30T08:00:00Z",
+        "smaKm": 6901.548,
+        "ecc": 0.0022,
+        "incDeg": 82.58,
+        "raanDeg": 28.99015,
+        "argpDeg": 342.41847,
+        "meanAnomalyDeg": 169.78563
+      },
       "envelope": null
     },
     {
@@ -271,7 +462,15 @@
       "launchSite": "PKMTR",
       "opsStatus": "NON_OPERATIONAL",
       "tleAgeHours": 30,
-      "elements": { "epoch": "2026-09-30T00:00:00Z", "smaKm": 6889.7, "ecc": 0.0019, "incDeg": 82.61, "raanDeg": 8.3, "argpDeg": 214.0, "meanAnomalyDeg": 76.5 },
+      "elements": {
+        "epoch": "2026-09-30T00:00:00Z",
+        "smaKm": 6900.003,
+        "ecc": 0.0019,
+        "incDeg": 82.61,
+        "raanDeg": 15.22925,
+        "argpDeg": 154.78667,
+        "meanAnomalyDeg": 69.3174
+      },
       "envelope": null
     },
     {
@@ -287,7 +486,15 @@
       "launchSite": "TTMTR",
       "opsStatus": "NON_OPERATIONAL",
       "tleAgeHours": 28,
-      "elements": { "epoch": "2026-09-30T02:00:00Z", "smaKm": 7152.6, "ecc": 0.0034, "incDeg": 86.39, "raanDeg": 241.7, "argpDeg": 150.9, "meanAnomalyDeg": 209.1 },
+      "elements": {
+        "epoch": "2026-09-30T02:00:00Z",
+        "smaKm": 7152.6,
+        "ecc": 0.0034,
+        "incDeg": 86.39,
+        "raanDeg": 241.7,
+        "argpDeg": 150.9,
+        "meanAnomalyDeg": 209.1
+      },
       "envelope": null
     }
   ],
@@ -297,28 +504,51 @@
       "name": "INDIAN PROTECTED FLEET",
       "category": "protected",
       "scope": "ORG",
-      "memberIds": ["RSAT-2A", "PIXXEL-FF02", "PIXXEL-TD2", "DGT-SCOT", "EOS-06", "CARTOSAT-3"]
+      "memberIds": [
+        "RSAT-2A",
+        "PIXXEL-FF02",
+        "PIXXEL-TD2",
+        "DGT-SCOT",
+        "EOS-06",
+        "CARTOSAT-3"
+      ]
     },
     {
       "id": "LST-COOP",
       "name": "COOPERATIVE OPERATORS",
       "category": "cooperative",
       "scope": "ORG",
-      "memberIds": ["ISS", "STARLINK-31044", "ICEYE-X36", "LANDSAT-9"]
+      "memberIds": [
+        "ISS",
+        "STARLINK-31044",
+        "ICEYE-X36",
+        "LANDSAT-9"
+      ]
     },
     {
       "id": "LST-UNCOOP",
       "name": "UNCOOPERATIVE WATCH",
       "category": "uncooperative",
       "scope": "ORG",
-      "memberIds": ["OBJ-2026-118C", "SL16-RB", "CZ4C-RB", "SL8-RB", "FY1C-DEB", "C1408-DEB-A", "C1408-DEB-B", "IRIDIUM33-DEB"]
+      "memberIds": [
+        "OBJ-2026-118C",
+        "SL16-RB",
+        "CZ4C-RB",
+        "SL8-RB",
+        "FY1C-DEB",
+        "C1408-DEB-A",
+        "C1408-DEB-B",
+        "IRIDIUM33-DEB"
+      ]
     },
     {
       "id": "LST-USR-SL16",
       "name": "SL-16 CLUSTER (ANALYST)",
       "category": "uncooperative",
       "scope": "USER",
-      "memberIds": ["SL16-RB"]
+      "memberIds": [
+        "SL16-RB"
+      ]
     }
   ]
 }

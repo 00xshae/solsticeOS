@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CatalogSegment, ManeuverPhase, RsoListCategory } from '@/types'
 import { conjunctionById, conjunctions, maneuverSequences, rsoById, rsoLists, rsoObjects } from '.'
+import { propagateEci } from '@/lib/orbit'
 
 const SEGMENTS: CatalogSegment[] = ['IND', 'PAY', 'RB', 'DEB']
 const CATEGORIES: RsoListCategory[] = ['protected', 'cooperative', 'uncooperative']
@@ -47,6 +48,15 @@ describe('conjunctions', () => {
       expect(latest).toMatchObject({ pc: e.pc, missDistanceM: e.missDistanceM, tca: e.tca })
       const times = e.assessments.map((a) => Date.parse(a.assessedAt))
       expect(times).toEqual([...times].sort((a, b) => a - b))
+    }
+  })
+
+  it('puts the secondary on the primary at TCA so the globe geometry agrees', () => {
+    for (const e of conjunctions) {
+      const t = Date.parse(e.tca)
+      const p = propagateEci(rsoById.get(e.primaryId)!.elements, t)
+      const s = propagateEci(rsoById.get(e.secondaryId)!.elements, t)
+      expect(Math.hypot(p.x - s.x, p.y - s.y, p.z - s.z), e.id).toBeLessThan(1)
     }
   })
 
