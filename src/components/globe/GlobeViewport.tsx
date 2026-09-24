@@ -4,19 +4,22 @@ import * as THREE from 'three'
 import { LocateFixed } from 'lucide-react'
 import { rsoById, rsoObjects } from '@/data'
 import { CATEGORY_HEX, SEVERITY_HEX } from '@/lib/format'
+import { maneuveredElementsAt } from '@/lib/maneuver'
 import { EARTH_RADIUS_KM, geoAt, orbitRing, type GeoPoint } from '@/lib/orbit'
 import {
   rsoCategories,
   selectActiveConjunction,
+  selectActiveSequence,
   selectDisplayTimeMs,
   selectSeverity,
   useMissionStore,
   type MissionState,
 } from '@/store/missionStore'
-import type { RSOObject, RsoListCategory } from '@/types'
+import type { OrbitalElements, RSOObject, RsoListCategory } from '@/types'
+import { buildPlanOverlay, type OverlayMarker, type OverlayPath } from './planOverlay'
 
 const HOME_VIEW = { lat: 18, lng: 79, altitude: 2.6 }
-const RING_REFRESH_MS = 250
+const OVERLAY_REFRESH_MS = 250
 
 /** Persistent per-object datum: globe.gl binds meshes by identity, so we mutate these in place. */
 interface SatDatum {
@@ -28,18 +31,8 @@ interface SatDatum {
   alt: number
 }
 
-interface RingDatum {
-  id: string
-  points: GeoPoint[]
-  color: string
-  stroke: number
-}
-
-interface LabelDatum {
-  id: string
-  sat: SatDatum
-  el: HTMLElement
-}
+/** Anything drawn as an HTML label: object names and plan markers share one layer. */
+type HtmlDatum = OverlayMarker
 
 const toAlt = (altKm: number) => altKm / EARTH_RADIUS_KM
 
@@ -83,6 +76,15 @@ function focusIds(s: MissionState): string[] {
   return [...ids]
 }
 
+/** Elements to propagate for an object at the display time, honouring the active COLA plan. */
+function effectiveElements(s: MissionState, object: RSOObject, timeMs: number): OrbitalElements {
+  const conj = selectActiveConjunction(s)
+  const sequence = selectActiveSequence(s)
+  return conj && sequence && conj.primaryId === object.id
+    ? maneuveredElementsAt(object.elements, sequence, timeMs)
+    : object.elements
+}
+
 export function GlobeViewport() {
   const containerRef = useRef<HTMLDivElement>(null)
   const globeRef = useRef<GlobeInstance | null>(null)
@@ -100,7 +102,8 @@ export function GlobeViewport() {
       alt: 0,
     }))
     const satById = new Map(sats.map((d) => [d.id, d]))
-    const labels = new Map<string, LabelDatum>()
+    const labels = new Map<string, HtmlDatum>()
+    let plan: { key: string; paths: OverlayPath[]; markers: OverlayMarker[] } | null = null
 
     const globe = new Globe(container, { animateIn: false })
       .backgroundColor('#0b0f17')
@@ -128,13 +131,15 @@ export function GlobeViewport() {
       .pathPointLat('lat')
       .pathPointLng('lng')
       .pathPointAlt((p) => toAlt((p as GeoPoint).altKm))
-      .pathColor((d: object) => (d as RingDatum).color)
-      .pathStroke((d) => (d as RingDatum).stroke)
+      .pathColor((d: object) => (d as OverlayPath).color)
+      .pathStroke((d: object) => (d as OverlayPath).stroke)
+      .pathDashLength((d: object) => (d as OverlayPath).dash)
+      .pathDashGap((d: object) => (d as OverlayPath).gap)
       .pathTransitionDuration(0)
-      .htmlLat((d) => (d as LabelDatum).sat.lat)
-      .htmlLng((d) => (d as LabelDatum).sat.lng)
-      .htmlAltitude((d) => (d as LabelDatum).sat.alt)
-      .htmlElement((d) => (d as LabelDatum).el)
+      .htmlLat('lat')
+      .htmlLng('lng')
+      .htmlAltitude('alt')
+      .htmlElement((d: object) => (d as HtmlDatum).el)
       .htmlTransitionDuration(0)
       .pointOfView(HOME_VIEW)
     // Headlight: keep the lit hemisphere facing the viewer wherever the camera orbits.
@@ -153,48 +158,74 @@ export function GlobeViewport() {
       for (const id of labels.keys()) if (!ids.includes(id)) labels.delete(id)
       for (const id of ids) {
         const sat = satById.get(id)
-        if (sat && !labels.has(id)) labels.set(id, { id, sat, el: labelElement(sat.object, sat.category) })
+        if (sat && !labels.has(id)) labels.set(id, { id, el: labelElement(sat.object, sat.category), lat: 0, lng: 0, alt: 0 })
       }
     }
 
-    const ringsFor = (s: MissionState, timeMs: number): RingDatum[] => {
+    const ringsFor = (s: MissionState, timeMs: number): OverlayPath[] => {
       const conj = selectActiveConjunction(s)
       const severityHex = conj ? SEVERITY_HEX[selectSeverity(s, conj).band] : null
       return focusIds(s).flatMap((id) => {
         const object = rsoById.get(id)
         if (!object) return []
-        const isSecondary = conj?.secondaryId === id
         return [
           {
             id,
-            points: orbitRing(object.elements, timeMs),
-            color: isSecondary && severityHex ? severityHex : CATEGORY_HEX[primaryCategory(id)],
+            points: orbitRing(effectiveElements(s, object, timeMs), timeMs),
+            color: conj?.secondaryId === id && severityHex ? severityHex : CATEGORY_HEX[primaryCategory(id)],
             stroke: id === s.selectedRsoId ? 0.5 : 0.3,
+            dash: 1,
+            gap: 0,
           },
         ]
       })
     }
 
+    const syncPlan = (s: MissionState) => {
+      const conj = selectActiveConjunction(s)
+      const sequence = selectActiveSequence(s)
+      const key = conj && sequence ? sequence.id : ''
+      if ((plan?.key ?? '') === key) return
+      plan =
+        conj && sequence
+          ? { key, ...buildPlanOverlay(conj, sequence, SEVERITY_HEX[selectSeverity(s, conj).band], toAlt) }
+          : null
+    }
+
     let frame = 0
-    let lastRingAt = -Infinity
+    let lastOverlayAt = -Infinity
+    let rings: OverlayPath[] = []
     const render = (now: number) => {
       headlight.position.copy(globe.camera().position)
       const s = useMissionStore.getState()
       const timeMs = selectDisplayTimeMs(s)
+
       for (const sat of sats) {
-        const geo = geoAt(sat.object.elements, timeMs)
+        const geo = geoAt(effectiveElements(s, sat.object, timeMs), timeMs)
         sat.lat = geo.lat
         sat.lng = geo.lng
         sat.alt = toAlt(geo.altKm)
       }
       globe.objectsData(sats)
-      if (now - lastRingAt > RING_REFRESH_MS) {
-        lastRingAt = now
-        const ids = focusIds(s)
-        syncLabels(ids)
-        globe.pathsData(ringsFor(s, timeMs))
+
+      if (now - lastOverlayAt > OVERLAY_REFRESH_MS) {
+        lastOverlayAt = now
+        syncLabels(focusIds(s))
+        syncPlan(s)
+        rings = ringsFor(s, timeMs)
+        globe.pathsData([...rings, ...(plan?.paths ?? [])])
       }
-      globe.htmlElementsData([...labels.values()])
+      for (const label of labels.values()) {
+        const sat = satById.get(label.id)!
+        label.lat = sat.lat
+        label.lng = sat.lng
+        label.alt = sat.alt
+      }
+      globe.htmlElementsData([...labels.values(), ...(plan?.markers ?? [])])
+
+      const followed = s.followSelected && s.selectedRsoId ? satById.get(s.selectedRsoId) : undefined
+      if (followed) globe.pointOfView({ lat: followed.lat, lng: followed.lng, altitude: globe.pointOfView().altitude })
+
       frame = requestAnimationFrame(render)
     }
     frame = requestAnimationFrame(render)
@@ -214,12 +245,14 @@ export function GlobeViewport() {
     const globe = globeRef.current
     const object = selectedRsoId ? rsoById.get(selectedRsoId) : null
     if (!globe || !object) return
-    const geo = geoAt(object.elements, selectDisplayTimeMs(useMissionStore.getState()))
+    const s = useMissionStore.getState()
+    const timeMs = selectDisplayTimeMs(s)
+    const geo = geoAt(effectiveElements(s, object, timeMs), timeMs)
     globe.pointOfView({ lat: geo.lat, lng: geo.lng, altitude: 1.8 }, 1200)
   }, [selectedRsoId])
 
   return (
-    <section className="relative min-w-0 flex-1 overflow-hidden bg-void" aria-label="3D operating picture">
+    <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-void" aria-label="3D operating picture">
       <div ref={containerRef} className="absolute inset-0" />
       <GlobeLegend />
       <button
@@ -244,6 +277,10 @@ function GlobeLegend() {
             {c}
           </span>
         ))}
+        <span className="flex items-center gap-1.5 text-[#67e8f9]">
+          <span className="h-0.5 w-3 bg-current" />
+          COLA arc
+        </span>
       </div>
     </div>
   )
