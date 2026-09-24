@@ -51,14 +51,14 @@ function loadCountries(): Promise<CountryFeature[]> {
 // Muted, print-atlas-style palette; assigned deterministically so a country keeps its colour
 // across surface switches instead of jittering on every re-render.
 const POLITICAL_PALETTE = [
-  'rgba(239, 137, 96, 0.55)',
-  'rgba(122, 172, 122, 0.55)',
-  'rgba(122, 158, 199, 0.55)',
-  'rgba(216, 180, 122, 0.55)',
-  'rgba(180, 140, 199, 0.55)',
-  'rgba(153, 194, 183, 0.55)',
-  'rgba(214, 158, 173, 0.55)',
-  'rgba(163, 177, 138, 0.55)',
+  'rgba(224, 122, 79, 0.72)',
+  'rgba(94, 163, 94, 0.72)',
+  'rgba(91, 145, 199, 0.72)',
+  'rgba(214, 165, 87, 0.72)',
+  'rgba(163, 117, 199, 0.72)',
+  'rgba(94, 175, 158, 0.72)',
+  'rgba(206, 121, 148, 0.72)',
+  'rgba(140, 158, 94, 0.72)',
 ]
 function countryColor(feature: object) {
   const key = (feature as CountryFeature).properties?.ADM0_A3 ?? (feature as CountryFeature).properties?.ADMIN ?? ''
@@ -188,7 +188,7 @@ export function GlobeViewport() {
       .globeImageUrl('/textures/earth-blue-marble.jpg')
       .bumpImageUrl('/textures/earth-topology.png')
       .showAtmosphere(true)
-      .atmosphereColor('#5c7c93')
+      .atmosphereColor('#6fa3c4')
       .atmosphereAltitude(0.18)
       .polygonsData([])
       .polygonAltitude(0.006)
@@ -452,7 +452,7 @@ function GlobeLegend() {
           Tracked RSO
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-0.5 w-3 rounded-full bg-[#7fa0b3] light:bg-[#4a6b8c]" />
+          <span className="h-0.5 w-3 rounded-full bg-[#5b9bd1] light:bg-[#2f6fa8]" />
           COLA arc
         </span>
         <span className="flex items-center gap-1.5">
