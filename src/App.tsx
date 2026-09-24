@@ -1,3 +1,4 @@
+import { ComplianceModal } from '@/components/compliance/ComplianceModal'
 import { CatalogSidebar } from '@/components/layout/CatalogSidebar'
 import { Header } from '@/components/layout/Header'
 import { GlobeViewport } from '@/components/globe/GlobeViewport'
@@ -18,6 +19,7 @@ export default function App() {
         </div>
         <InspectorPanel />
       </div>
+      <ComplianceModal />
     </div>
   )
 }
