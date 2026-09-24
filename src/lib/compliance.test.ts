@@ -62,6 +62,7 @@ describe('OCM body', () => {
   it('lists both burns with opposite in-track delta-v', () => {
     const body = build('CCSDS_OCM').body
     expect(body).toContain('MAN_PURPOSE = COLLISION_AVOIDANCE')
+    expect(body).toContain('with SL-16 R/B (NORAD 22285)')
     const burns = body.split('\n').filter((l) => /^\d{4}-.* [-\d. ]+$/.test(l) && l.includes('0.0000'))
     expect(burns).toHaveLength(2)
     const inTrack = burns.map((l) => Number(l.trim().split(/\s+/)[3]))

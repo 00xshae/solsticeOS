@@ -13,6 +13,7 @@ import type {
   ManeuverSequence,
   RSOObject,
 } from '@/types'
+import { rsoById } from '@/data'
 import { MIN_DECISION_LEAD_MS } from './cola'
 import { maneuveredElementsAt } from './maneuver'
 import { propagateEci } from './orbit'
@@ -135,6 +136,11 @@ function renderOem(input: ComplianceInput, id: string, authorizationRef: string)
   return lines.join('\n') + '\n'
 }
 
+function secondaryLabel(event: ConjunctionEvent) {
+  const secondary = rsoById.get(event.secondaryId)
+  return secondary ? `${secondary.name} (NORAD ${secondary.noradId})` : event.secondaryId
+}
+
 function renderOcm(input: ComplianceInput, id: string, authorizationRef: string): string {
   const { object, sequence, event, envelope, nowMs } = input
   const [start, stop] = ephemerisSpan(sequence)
@@ -149,7 +155,7 @@ function renderOcm(input: ComplianceInput, id: string, authorizationRef: string)
     'TIME_SYSTEM = UTC',
     `START_TIME = ${ccsdsTime(start)}`,
     `STOP_TIME = ${ccsdsTime(stop)}`,
-    `COMMENT Conjunction ${event.id} with NORAD ${event.secondaryId}, TCA ${ccsdsTime(Date.parse(event.tca))}`,
+    `COMMENT Conjunction ${event.id} with ${secondaryLabel(event)}, TCA ${ccsdsTime(Date.parse(event.tca))}`,
     'META_STOP',
     '',
     'MAN_START',
