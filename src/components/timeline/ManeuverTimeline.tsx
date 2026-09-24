@@ -159,7 +159,7 @@ export function Track({ plan, markerMs, markerLabel }: { plan: StepPlan; markerM
 
       <Marker frac={markerFrac} className="bg-sev-red" label={markerLabel} labelClass="text-sev-red-ink" />
       {clockFrac > 0 && clockFrac < 1 && (
-        <Marker frac={clockFrac} className="bg-cooperative/70" label="NOW" labelClass="text-cooperative" />
+        <Marker frac={clockFrac} className="bg-sev-green/70" label="NOW" labelClass="text-sev-green-ink" />
       )}
       <div
         className={cn(

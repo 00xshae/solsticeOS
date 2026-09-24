@@ -37,7 +37,7 @@ export function InterceptTimeline({ window }: { window: ThreatWindow }) {
   return (
     <Shell title={`Intercept sequence · ${chaser.name} (simulated)`} aside={<Controls key={sequence.id} sequence={sequence} />}>
       <div className="space-y-3">
-        <div className="font-mono text-[11px] text-ink-muted">
+        <div className="font-mono text-[11px] text-secondary">
           {sequence.name} · Δv {sequence.totalDeltaVMps.toFixed(2)} m/s · standoff {sequence.standoffKm.toFixed(1)} km
         </div>
         <Track plan={sequence} markerMs={Date.parse(sequence.steps[3].end)} markerLabel="ARRIVAL" />
