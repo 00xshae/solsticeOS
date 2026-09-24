@@ -6,3 +6,6 @@ dist
 *.tsbuildinfo
 .vercel
 .env*
+
+# Local font source drop (licensed .otf + EULA); the app asset lives in public/fonts.
+/conthrax/
