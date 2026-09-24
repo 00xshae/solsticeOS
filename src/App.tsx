@@ -1,3 +1,4 @@
+import { Show } from '@clerk/react'
 import { ComplianceModal } from '@/components/compliance/ComplianceModal'
 import { ThreatRatingModal } from '@/components/threat/ThreatRatingModal'
 import { CatalogSidebar } from '@/components/layout/CatalogSidebar'
@@ -7,13 +8,13 @@ import { GlobeViewport } from '@/components/globe/GlobeViewport'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
 import { RsoListsPage } from '@/components/lists/RsoListsPage'
 import { TimelineDock } from '@/components/timeline/TimelineDock'
+import { LoginPage } from '@/components/auth/LoginPage'
 import { useMissionClock } from '@/hooks/useMissionClock'
 import { useMissionStore } from '@/store/missionStore'
 import { useApplyTheme } from '@/store/themeStore'
 
-export default function App() {
+function MissionConsole() {
   useMissionClock()
-  useApplyTheme()
   const view = useMissionStore((s) => s.view)
   return (
     <div className="flex h-full flex-col">
@@ -36,5 +37,19 @@ export default function App() {
       <ThreatRatingModal />
       <FloatingControls />
     </div>
+  )
+}
+
+export default function App() {
+  useApplyTheme()
+  return (
+    <>
+      <Show when="signed-out">
+        <LoginPage />
+      </Show>
+      <Show when="signed-in">
+        <MissionConsole />
+      </Show>
+    </>
   )
 }
