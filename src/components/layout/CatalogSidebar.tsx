@@ -96,7 +96,7 @@ function TrackedRow({ object }: { object: RSOObject }) {
 function SectionTitle({ children, count }: { children: string; count: number }) {
   return (
     <div className="flex items-baseline justify-between px-3 pb-1 pt-3">
-      <h3 className="text-[10px] font-medium uppercase tracking-widest text-tertiary">{children}</h3>
+      <h3 className="font-display text-[10px] font-medium uppercase tracking-widest text-tertiary">{children}</h3>
       <span className="font-mono text-[10px] tabular-nums text-tertiary">{count}</span>
     </div>
   )
@@ -114,7 +114,7 @@ export function CatalogSidebar() {
     <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-surface">
       <div className="border-b border-border p-3">
         <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-secondary">RSO Catalog</h2>
+          <h2 className="font-display text-[11px] font-semibold uppercase tracking-widest text-secondary">RSO Catalog</h2>
           <span className="text-[11px] text-tertiary">{rsoObjects.length} in catalog</span>
         </div>
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
