@@ -1,6 +1,7 @@
 import { CatalogSidebar } from '@/components/layout/CatalogSidebar'
 import { Header } from '@/components/layout/Header'
 import { GlobeViewport } from '@/components/globe/GlobeViewport'
+import { InspectorPanel } from '@/components/inspector/InspectorPanel'
 import { useMissionClock } from '@/hooks/useMissionClock'
 
 export default function App() {
@@ -11,6 +12,7 @@ export default function App() {
       <div className="flex min-h-0 flex-1">
         <CatalogSidebar />
         <GlobeViewport />
+        <InspectorPanel />
       </div>
     </div>
   )
