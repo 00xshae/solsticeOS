@@ -29,11 +29,16 @@ export const establishedWindows = (lists: RSOList[], scope?: ListScope) =>
 
 export const windowRating = (window: ThreatWindow, nowMs: number) => rateWindow(sequencesOfWindow.get(window.id)!, nowMs)
 
-/** An object's rating in one role: the worst open window it takes part in. */
+/**
+ * An object's rating in one role: the worst open window it takes part in. `scope` filters by
+ * where the counterpart is listed, as in Solstice: a threatened object's USER rating counts
+ * threats from opposed RSOs on the analyst's own lists; its ORG rating, the organisation's.
+ */
 export function objectThreat(lists: RSOList[], objectId: string, role: ThreatRole, nowMs: number, scope?: ListScope) {
-  const key = role === 'threatened' ? 'targetId' : 'opposedId'
-  const rated: RatedWindow[] = establishedWindows(lists, scope)
-    .filter((w) => w[key] === objectId)
+  const [self, other] = role === 'threatened' ? (['targetId', 'opposedId'] as const) : (['opposedId', 'targetId'] as const)
+  const otherRole: ThreatRole = role === 'threatened' ? 'threatening' : 'threatened'
+  const rated: RatedWindow[] = establishedWindows(lists)
+    .filter((w) => w[self] === objectId && rolesOf(lists, w[other], scope).includes(otherRole))
     .flatMap((w) => {
       const r = windowRating(w, nowMs)
       return r ? [{ windowId: w.id, rating: r.rating }] : []
