@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Globe, { type GlobeInstance } from 'globe.gl'
 import * as THREE from 'three'
-import { LocateFixed } from 'lucide-react'
+import { Globe2, LocateFixed, Map as MapIcon, Orbit } from 'lucide-react'
 import { rsoById } from '@/data'
+import { cn } from '@/lib/cn'
 import { SEVERITY_HEX } from '@/lib/format'
 import { maneuveredElementsAt } from '@/lib/maneuver'
 import { EARTH_RADIUS_KM, geoAt, orbitRing, type GeoPoint } from '@/lib/orbit'
@@ -25,6 +26,46 @@ const OVERLAY_REFRESH_MS = 250
 const SAT_HEX = '#ffffff'
 const RING_COLOR = 'rgba(255, 255, 255, 0.7)'
 const SELECTED_RING_COLOR = 'rgba(255, 255, 255, 0.95)'
+
+export type GlobeSurface = 'physical' | 'wireframe' | 'political'
+
+const SURFACE_OPTIONS: { value: GlobeSurface; label: string; icon: typeof Globe2 }[] = [
+  { value: 'physical', label: 'Physical', icon: Globe2 },
+  { value: 'wireframe', label: 'Wireframe', icon: Orbit },
+  { value: 'political', label: 'Political', icon: MapIcon },
+]
+
+interface CountryFeature {
+  properties?: { ADM0_A3?: string; ADMIN?: string }
+}
+
+/** Natural Earth 110m country outlines, fetched once and shared across surface switches. */
+let countriesPromise: Promise<CountryFeature[]> | null = null
+function loadCountries(): Promise<CountryFeature[]> {
+  countriesPromise ??= fetch('/data/ne_110m_admin_0_countries.geojson')
+    .then((r) => r.json())
+    .then((geojson: { features: CountryFeature[] }) => geojson.features)
+  return countriesPromise
+}
+
+// Muted, print-atlas-style palette; assigned deterministically so a country keeps its colour
+// across surface switches instead of jittering on every re-render.
+const POLITICAL_PALETTE = [
+  'rgba(239, 137, 96, 0.55)',
+  'rgba(122, 172, 122, 0.55)',
+  'rgba(122, 158, 199, 0.55)',
+  'rgba(216, 180, 122, 0.55)',
+  'rgba(180, 140, 199, 0.55)',
+  'rgba(153, 194, 183, 0.55)',
+  'rgba(214, 158, 173, 0.55)',
+  'rgba(163, 177, 138, 0.55)',
+]
+function countryColor(feature: object) {
+  const key = (feature as CountryFeature).properties?.ADM0_A3 ?? (feature as CountryFeature).properties?.ADMIN ?? ''
+  let hash = 0
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) | 0
+  return POLITICAL_PALETTE[Math.abs(hash) % POLITICAL_PALETTE.length]!
+}
 
 /** Persistent per-object datum: globe.gl binds meshes by identity, so we mutate these in place. */
 interface SatDatum {
@@ -118,6 +159,7 @@ function pairHex(s: MissionState): { id: string; hex: string } | null {
 export function GlobeViewport() {
   const containerRef = useRef<HTMLDivElement>(null)
   const globeRef = useRef<GlobeInstance | null>(null)
+  const [surface, setSurface] = useState<GlobeSurface>('physical')
 
   useEffect(() => {
     const container = containerRef.current
@@ -148,6 +190,12 @@ export function GlobeViewport() {
       .showAtmosphere(true)
       .atmosphereColor('#38bdf8')
       .atmosphereAltitude(0.18)
+      .polygonsData([])
+      .polygonAltitude(0.006)
+      .polygonCapColor(countryColor)
+      .polygonSideColor(() => 'rgba(0, 0, 0, 0)')
+      .polygonStrokeColor(() => 'rgba(250, 250, 249, 0.35)')
+      .polygonsTransitionDuration(0)
       .objectLat('lat')
       .objectLng('lng')
       .objectAltitude('alt')
@@ -288,6 +336,44 @@ export function GlobeViewport() {
     }
   }, [])
 
+  // Swap the globe's surface: a textured photograph, a translucent lat/long grid, or Natural
+  // Earth country polygons coloured like a print atlas. Runs independently of the main effect so
+  // switching surfaces never rebuilds the globe (camera, tracked objects, overlays untouched).
+  useEffect(() => {
+    const globe = globeRef.current
+    if (!globe) return
+    let cancelled = false
+
+    const material = globe.globeMaterial() as THREE.MeshPhongMaterial
+    if (surface === 'wireframe') {
+      globe.globeImageUrl('').bumpImageUrl('').showGraticules(true).polygonsData([])
+      material.transparent = true
+      material.opacity = 0.35
+      material.needsUpdate = true
+    } else if (surface === 'political') {
+      globe.globeImageUrl('').bumpImageUrl('').showGraticules(false)
+      material.transparent = false
+      material.opacity = 1
+      material.needsUpdate = true
+      loadCountries().then((features) => {
+        if (!cancelled) globe.polygonsData(features)
+      })
+    } else {
+      globe
+        .globeImageUrl('/textures/earth-blue-marble.jpg')
+        .bumpImageUrl('/textures/earth-topology.png')
+        .showGraticules(false)
+        .polygonsData([])
+      material.transparent = false
+      material.opacity = 1
+      material.needsUpdate = true
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [surface])
+
   // Fly to the newly selected object.
   const selectedRsoId = useMissionStore((s) => s.selectedRsoId)
   useEffect(() => {
@@ -304,6 +390,7 @@ export function GlobeViewport() {
     <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-black" aria-label="3D operating picture">
       <div ref={containerRef} className="absolute inset-0" />
       <GlobeLegend />
+      <SurfaceSwitcher surface={surface} onChange={setSurface} />
       <button
         type="button"
         onClick={() => globeRef.current?.pointOfView(HOME_VIEW, 1000)}
@@ -312,6 +399,35 @@ export function GlobeViewport() {
         <LocateFixed className="size-3.5" /> Reset view
       </button>
     </section>
+  )
+}
+
+/** Globe surface picker: physical imagery, a translucent lat/long grid, or political boundaries. */
+function SurfaceSwitcher({ surface, onChange }: { surface: GlobeSurface; onChange: (surface: GlobeSurface) => void }) {
+  return (
+    <div
+      className="absolute left-3 top-3 flex overflow-hidden rounded-lg border border-glass-border bg-glass backdrop-blur-md light:shadow-lg"
+      role="radiogroup"
+      aria-label="Globe surface"
+    >
+      {SURFACE_OPTIONS.map(({ value, label, icon: Icon }) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={surface === value}
+          title={label}
+          onClick={() => onChange(value)}
+          className={cn(
+            'flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-wider transition-colors duration-100 ease-out',
+            surface === value ? 'bg-accent-muted text-accent' : 'text-secondary hover:bg-elevated hover:text-primary',
+          )}
+        >
+          <Icon className="size-3.5" />
+          {label}
+        </button>
+      ))}
+    </div>
   )
 }
 
