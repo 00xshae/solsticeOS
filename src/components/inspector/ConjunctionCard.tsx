@@ -155,7 +155,7 @@ export function ConjunctionCard({ event }: { event: ConjunctionEvent }) {
       </div>
 
       <div className="grid grid-cols-3 gap-3 border-t border-line px-3 py-3">
-        <Field label="TCA (UTC)" value={formatUtc(tcaMs).slice(5)} />
+        <Field label="TCA (UTC)" value={formatUtc(tcaMs, false).slice(5)} />
         <Field label="Time to TCA" value={formatCountdown(tcaMs, minute * 60_000)} />
         <Field label="Rel. velocity" value={`${event.relativeVelocityKmS.toFixed(2)} km/s`} />
         <Field label="Miss distance" value={formatKm(event.missDistanceM)} />
