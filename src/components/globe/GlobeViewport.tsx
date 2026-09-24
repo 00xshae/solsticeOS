@@ -2,12 +2,11 @@ import { useEffect, useRef } from 'react'
 import Globe, { type GlobeInstance } from 'globe.gl'
 import * as THREE from 'three'
 import { LocateFixed } from 'lucide-react'
-import { rsoById, rsoObjects } from '@/data'
-import { CATEGORY_HEX, SEVERITY_HEX } from '@/lib/format'
+import { rsoById } from '@/data'
+import { SEVERITY_HEX } from '@/lib/format'
 import { maneuveredElementsAt } from '@/lib/maneuver'
 import { EARTH_RADIUS_KM, geoAt, orbitRing, type GeoPoint } from '@/lib/orbit'
 import {
-  rsoCategories,
   selectActiveConjunction,
   selectActiveSequence,
   selectDisplayTimeMs,
@@ -15,17 +14,19 @@ import {
   useMissionStore,
   type MissionState,
 } from '@/store/missionStore'
-import type { OrbitalElements, RSOObject, RsoListCategory } from '@/types'
+import type { OrbitalElements, RSOObject } from '@/types'
 import { buildPlanOverlay, type OverlayMarker, type OverlayPath } from './planOverlay'
 
 const HOME_VIEW = { lat: 18, lng: 79, altitude: 2.6 }
 const OVERLAY_REFRESH_MS = 250
+const SAT_HEX = '#ffffff'
+const RING_COLOR = 'rgba(255, 255, 255, 0.7)'
+const SELECTED_RING_COLOR = 'rgba(255, 255, 255, 0.95)'
 
 /** Persistent per-object datum: globe.gl binds meshes by identity, so we mutate these in place. */
 interface SatDatum {
   id: string
   object: RSOObject
-  category: RsoListCategory
   lat: number
   lng: number
   alt: number
@@ -36,44 +37,56 @@ type HtmlDatum = OverlayMarker
 
 const toAlt = (altKm: number) => altKm / EARTH_RADIUS_KM
 
-function primaryCategory(id: string): RsoListCategory {
-  const categories = rsoCategories(id)
-  return categories.includes('protected') ? 'protected' : categories.includes('uncooperative') ? 'uncooperative' : 'cooperative'
+/** Radial white-to-transparent falloff, drawn once and shared by every glow sprite. */
+function glowTexture() {
+  const size = 64
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
+  gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)')
+  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)')
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, size, size)
+  return new THREE.CanvasTexture(canvas)
 }
 
-function satMesh(category: RsoListCategory) {
-  const color = new THREE.Color(CATEGORY_HEX[category])
-  const group = new THREE.Group()
-  group.add(new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 8), new THREE.MeshBasicMaterial({ color })))
-  // Soft halo so small objects stay findable when zoomed out.
-  group.add(
-    new THREE.Mesh(
-      new THREE.SphereGeometry(2.6, 12, 8),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, depthWrite: false }),
-    ),
-  )
-  return group
+/** White core plus an additive glow sprite; geometry and materials are shared across objects. */
+function satMeshFactory() {
+  const core = new THREE.SphereGeometry(0.9, 12, 8)
+  const coreMaterial = new THREE.MeshBasicMaterial({ color: SAT_HEX })
+  const glowMaterial = new THREE.SpriteMaterial({
+    map: glowTexture(),
+    color: SAT_HEX,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  })
+  const make = () => {
+    const group = new THREE.Group()
+    group.add(new THREE.Mesh(core, coreMaterial))
+    const glow = new THREE.Sprite(glowMaterial)
+    glow.scale.setScalar(7)
+    group.add(glow)
+    return group
+  }
+  make.dispose = () => {
+    core.dispose()
+    coreMaterial.dispose()
+    glowMaterial.map?.dispose()
+    glowMaterial.dispose()
+  }
+  return make
 }
 
-function labelElement(object: RSOObject, category: RsoListCategory) {
+function labelElement(object: RSOObject) {
   const el = document.createElement('div')
   el.className =
-    'pointer-events-none -translate-y-5 whitespace-nowrap rounded-sm bg-void/70 px-1.5 py-px font-mono text-[10px] tracking-wider'
-  el.style.color = CATEGORY_HEX[category]
+    'pointer-events-none -translate-y-5 whitespace-nowrap rounded-sm bg-void/70 px-1.5 py-px font-mono text-[10px] tracking-wider text-white'
   el.textContent = object.name
   return el
-}
-
-/** Objects whose names and rings are shown: the selection plus the active conjunction pair. */
-function focusIds(s: MissionState): string[] {
-  const conj = selectActiveConjunction(s)
-  const ids = new Set<string>()
-  if (s.selectedRsoId) ids.add(s.selectedRsoId)
-  if (conj) {
-    ids.add(conj.primaryId)
-    ids.add(conj.secondaryId)
-  }
-  return [...ids]
 }
 
 /** Elements to propagate for an object at the display time, honouring the active COLA plan. */
@@ -93,15 +106,20 @@ export function GlobeViewport() {
     const container = containerRef.current
     if (!container) return
 
-    const sats: SatDatum[] = rsoObjects.map((object) => ({
-      id: object.id,
-      object,
-      category: primaryCategory(object.id),
-      lat: 0,
-      lng: 0,
-      alt: 0,
-    }))
-    const satById = new Map(sats.map((d) => [d.id, d]))
+    // Only tracked objects are drawn; data is cached by id so globe.gl keeps each mesh across frames.
+    const satById = new Map<string, SatDatum>()
+    const trackedSats = (ids: string[]): SatDatum[] =>
+      ids.flatMap((id) => {
+        let sat = satById.get(id)
+        if (!sat) {
+          const object = rsoById.get(id)
+          if (!object) return []
+          sat = { id, object, lat: 0, lng: 0, alt: 0 }
+          satById.set(id, sat)
+        }
+        return [sat]
+      })
+    const satMesh = satMeshFactory()
     const labels = new Map<string, HtmlDatum>()
     let plan: { key: string; paths: OverlayPath[]; markers: OverlayMarker[] } | null = null
 
@@ -117,7 +135,7 @@ export function GlobeViewport() {
       .objectLng('lng')
       .objectAltitude('alt')
       .objectFacesSurface(false)
-      .objectThreeObject((d) => satMesh((d as SatDatum).category))
+      .objectThreeObject(() => satMesh())
       .objectLabel((d) => {
         const { object } = d as SatDatum
         return `<div class="font-mono text-[11px]">${object.name}<br/><span style="opacity:.6">NORAD ${object.noradId}</span></div>`
@@ -158,22 +176,27 @@ export function GlobeViewport() {
       for (const id of labels.keys()) if (!ids.includes(id)) labels.delete(id)
       for (const id of ids) {
         const sat = satById.get(id)
-        if (sat && !labels.has(id)) labels.set(id, { id, el: labelElement(sat.object, sat.category), lat: 0, lng: 0, alt: 0 })
+        if (sat && !labels.has(id)) labels.set(id, { id, el: labelElement(sat.object), lat: 0, lng: 0, alt: 0 })
       }
     }
 
     const ringsFor = (s: MissionState, timeMs: number): OverlayPath[] => {
       const conj = selectActiveConjunction(s)
       const severityHex = conj ? SEVERITY_HEX[selectSeverity(s, conj).band] : null
-      return focusIds(s).flatMap((id) => {
+      return s.trackedIds.flatMap((id) => {
         const object = rsoById.get(id)
         if (!object) return []
         return [
           {
             id,
             points: orbitRing(effectiveElements(s, object, timeMs), timeMs),
-            color: conj?.secondaryId === id && severityHex ? severityHex : CATEGORY_HEX[primaryCategory(id)],
-            stroke: id === s.selectedRsoId ? 0.5 : 0.3,
+            color:
+              conj?.secondaryId === id && severityHex
+                ? severityHex
+                : id === s.selectedRsoId
+                  ? SELECTED_RING_COLOR
+                  : RING_COLOR,
+            stroke: id === s.selectedRsoId ? 0.9 : 0.6,
             dash: 1,
             gap: 0,
           },
@@ -200,6 +223,7 @@ export function GlobeViewport() {
       const s = useMissionStore.getState()
       const timeMs = selectDisplayTimeMs(s)
 
+      const sats = trackedSats(s.trackedIds)
       for (const sat of sats) {
         const geo = geoAt(effectiveElements(s, sat.object, timeMs), timeMs)
         sat.lat = geo.lat
@@ -210,20 +234,22 @@ export function GlobeViewport() {
 
       if (now - lastOverlayAt > OVERLAY_REFRESH_MS) {
         lastOverlayAt = now
-        syncLabels(focusIds(s))
+        syncLabels(s.trackedIds)
         syncPlan(s)
         rings = ringsFor(s, timeMs)
         globe.pathsData([...rings, ...(plan?.paths ?? [])])
       }
       for (const label of labels.values()) {
-        const sat = satById.get(label.id)!
+        const sat = satById.get(label.id)
+        if (!sat) continue
         label.lat = sat.lat
         label.lng = sat.lng
         label.alt = sat.alt
       }
       globe.htmlElementsData([...labels.values(), ...(plan?.markers ?? [])])
 
-      const followed = s.followSelected && s.selectedRsoId ? satById.get(s.selectedRsoId) : undefined
+      const followed =
+        s.followSelected && s.selectedRsoId && s.trackedIds.includes(s.selectedRsoId) ? satById.get(s.selectedRsoId) : undefined
       if (followed) globe.pointOfView({ lat: followed.lat, lng: followed.lng, altitude: globe.pointOfView().altitude })
 
       frame = requestAnimationFrame(render)
@@ -234,6 +260,7 @@ export function GlobeViewport() {
       cancelAnimationFrame(frame)
       resize.disconnect()
       globe._destructor()
+      satMesh.dispose()
       container.replaceChildren()
       globeRef.current = null
     }
@@ -271,12 +298,10 @@ function GlobeLegend() {
     <div className="pointer-events-none absolute bottom-3 left-3 rounded border border-line bg-panel/80 px-3 py-2 backdrop-blur">
       <div className="mb-1 font-mono text-[9px] uppercase tracking-widest text-ink-faint">Earth-fixed · Kepler + J2</div>
       <div className="flex gap-3 font-mono text-[10px] uppercase tracking-wider">
-        {(Object.keys(CATEGORY_HEX) as RsoListCategory[]).map((c) => (
-          <span key={c} className="flex items-center gap-1.5" style={{ color: CATEGORY_HEX[c] }}>
-            <span className="size-2 rounded-full bg-current" />
-            {c}
-          </span>
-        ))}
+        <span className="flex items-center gap-1.5 text-white">
+          <span className="size-2 rounded-full bg-current shadow-[0_0_6px_2px_rgba(255,255,255,0.6)]" />
+          Tracked RSO
+        </span>
         <span className="flex items-center gap-1.5 text-[#67e8f9]">
           <span className="h-0.5 w-3 bg-current" />
           COLA arc
