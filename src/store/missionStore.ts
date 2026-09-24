@@ -49,6 +49,9 @@ export type SpeedMultiplier = 1 | 10 | 60
 export type ColaStatus = 'PLANNING' | 'COMMITTED'
 export type AppView = 'globe' | 'lists'
 
+/** What the Threat Rating dialog explains: one window, or one object's aggregate. */
+export type RatingModalTarget = { kind: 'window'; windowId: string } | { kind: 'object'; objectId: string; role: ThreatRole }
+
 export interface NewListInput {
   name: string
   category: RsoListCategory
@@ -97,6 +100,7 @@ export interface MissionState {
   /** Mission-clock time the active plan was committed; null while planning. */
   committedAtMs: number | null
   complianceOpen: boolean
+  ratingModal: RatingModalTarget | null
 }
 
 export interface MissionActions {
@@ -131,6 +135,7 @@ export interface MissionActions {
   commitCola: () => void
   toggleFollow: () => void
   setComplianceOpen: (open: boolean) => void
+  openRatingModal: (target: RatingModalTarget | null) => void
   resetDemo: () => void
 }
 
@@ -190,6 +195,7 @@ export const initialMissionState: MissionState = {
   colaStatus: 'PLANNING',
   committedAtMs: null,
   complianceOpen: false,
+  ratingModal: null,
 }
 
 const withTracked = (ids: string[], id: string) => (ids.includes(id) || !rsoById.has(id) ? ids : [...ids, id])
@@ -370,6 +376,7 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
   },
   toggleFollow: () => set((s) => ({ followSelected: !s.followSelected })),
   setComplianceOpen: (complianceOpen) => set({ complianceOpen }),
+  openRatingModal: (ratingModal) => set({ ratingModal }),
   resetDemo: () => set(initialMissionState),
 }))
 

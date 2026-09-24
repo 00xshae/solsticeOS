@@ -24,7 +24,22 @@ export function formatPc(pc: number): string {
   return `${mantissa}e${Number(exp)}`
 }
 
-export const formatKm = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`)
+/** Solstice-style duration, e.g. "174h 26m 15s". */
+export function formatHms(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000))
+  return `${Math.floor(total / 3600)}h ${pad(Math.floor((total % 3600) / 60))}m ${pad(total % 60)}s`
+}
+
+/** "2 D AGO", "5 H AGO", "12 MIN AGO", "NOW". */
+export function formatAgo(thenMs: number, nowMs: number): string {
+  const min = Math.floor((nowMs - thenMs) / 60_000)
+  if (min < 1) return 'now'
+  if (min < 60) return `${min} min ago`
+  if (min < 48 * 60) return `${Math.floor(min / 60)} h ago`
+  return `${Math.floor(min / 1440)} d ago`
+}
+
+export const formatKm =(m: number) => (m >= 1000 ? `${(m / 1000).toFixed(2)} km` : `${Math.round(m)} m`)
 
 export const SEGMENT_LABEL: Record<CatalogSegment, string> = {
   IND: 'Indian Fleet',
