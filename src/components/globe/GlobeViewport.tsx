@@ -339,6 +339,15 @@ export function GlobeViewport() {
   // Swap the globe's surface: a textured photograph, a translucent lat/long grid, or Natural
   // Earth country polygons coloured like a print atlas. Runs independently of the main effect so
   // switching surfaces never rebuilds the globe (camera, tracked objects, overlays untouched).
+  //
+  // The blue-marble/bump textures are loaded once, in the main effect, and never re-requested
+  // here: every mode below only retints the existing material (colour/opacity/transparent are
+  // plain synchronous property writes). An earlier version cleared globeImageUrl/bumpImageUrl to
+  // '' for wireframe/political and set them back to the real URLs for physical, relying on
+  // three-globe's own async TextureLoader to reload and re-tint the map on the way back — that
+  // reload could still be in flight (or lose a race against the next click) when the user
+  // switched away again, leaving physical stuck tinted black. Never touching the URL removes the
+  // race entirely.
   useEffect(() => {
     const globe = globeRef.current
     if (!globe) return
@@ -346,27 +355,26 @@ export function GlobeViewport() {
 
     const material = globe.globeMaterial() as THREE.MeshPhongMaterial
     if (surface === 'wireframe') {
-      globe.globeImageUrl('').bumpImageUrl('').showGraticules(true).polygonsData([])
+      material.color = new THREE.Color(0x000000)
       material.transparent = true
       material.opacity = 0.35
       material.needsUpdate = true
+      globe.showGraticules(true).polygonsData([])
     } else if (surface === 'political') {
-      globe.globeImageUrl('').bumpImageUrl('').showGraticules(false)
+      material.color = new THREE.Color(0x000000)
       material.transparent = false
       material.opacity = 1
       material.needsUpdate = true
+      globe.showGraticules(false)
       loadCountries().then((features) => {
         if (!cancelled) globe.polygonsData(features)
       })
     } else {
-      globe
-        .globeImageUrl('/textures/earth-blue-marble.jpg')
-        .bumpImageUrl('/textures/earth-topology.png')
-        .showGraticules(false)
-        .polygonsData([])
+      material.color = new THREE.Color(0xffffff)
       material.transparent = false
       material.opacity = 1
       material.needsUpdate = true
+      globe.showGraticules(false).polygonsData([])
     }
 
     return () => {
