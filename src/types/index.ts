@@ -14,8 +14,8 @@ export type IsoUtc = string
 // Catalog
 // ---------------------------------------------------------------------------
 
-/** Catalog segment, used by the sidebar filter tabs. NGE = Indian non-governmental entity fleet. */
-export type CatalogSegment = 'NGE' | 'PAY' | 'RB' | 'DEB'
+/** Catalog segment, used by the sidebar filter tabs. IND = Indian protected fleet (ISRO + NGE). */
+export type CatalogSegment = 'IND' | 'PAY' | 'RB' | 'DEB'
 
 export type RcsSize = 'SMALL' | 'MEDIUM' | 'LARGE'
 
