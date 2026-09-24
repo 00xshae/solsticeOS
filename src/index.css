@@ -2,21 +2,43 @@
 @import '@fontsource-variable/jetbrains-mono';
 @import 'tailwindcss';
 
-/* Defense-grade dark C2 palette. Severity bands follow the Solstice 0-100 scale:
-   green < blue < yellow < orange < red. */
+/* Orbital Noir: dark-first tokens with a warm stone light mode. `.light` on <html> swaps the
+   theme. Severity band fills are identical in both modes (the globe reads them from format.ts);
+   the `-ink` variants are the same hues darkened for legible text on white. */
+@custom-variant dark (&:where(:root:not(.light), :root:not(.light) *));
+@custom-variant light (&:where(:root.light, :root.light *));
+
 @theme {
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
-  --color-void: #0b0f17;
-  --color-panel: #111827;
-  --color-panel-raised: #1e293b;
-  --color-line: #273449;
-  --color-ink: #e2e8f0;
-  --color-ink-muted: #94a3b8;
-  --color-ink-faint: #64748b;
+  /* Surfaces, back to front */
+  --color-base: #000000;
+  --color-surface: #0a0a0a;
+  --color-elevated: #141414;
+  --color-overlay: #1a1a1a;
+  --color-section: rgb(20 20 20 / 0.4);
+  --color-glass: rgb(0 0 0 / 0.7);
+  --color-glass-border: rgb(255 255 255 / 0.08);
+  --color-scrim: rgb(0 0 0 / 0.6);
 
-  --color-protected: #22d3ee;
+  --color-border: rgb(255 255 255 / 0.06);
+  --color-border-subtle: rgb(255 255 255 / 0.04);
+  --color-border-strong: rgb(255 255 255 / 0.1);
+  --color-border-focus: rgb(6 182 212 / 0.5);
+
+  --color-primary: #fafaf9;
+  --color-secondary: #a8a29e;
+  --color-tertiary: #78716c;
+  --color-disabled: #44403c;
+
+  --color-accent: #06b6d4;
+  --color-accent-hover: #22d3ee;
+  --color-accent-muted: rgb(6 182 212 / 0.12);
+  --color-accent-glow: rgb(6 182 212 / 0.15);
+  --color-on-accent: #000000;
+
+  --color-protected: #06b6d4;
   --color-cooperative: #34d399;
   --color-uncooperative: #f59e0b;
 
@@ -25,6 +47,106 @@
   --color-sev-yellow: #eab308;
   --color-sev-orange: #f97316;
   --color-sev-red: #ef4444;
+
+  --color-sev-green-ink: #22c55e;
+  --color-sev-blue-ink: #3b82f6;
+  --color-sev-yellow-ink: #eab308;
+  --color-sev-orange-ink: #f97316;
+  --color-sev-red-ink: #ef4444;
+
+  /* Legacy names, kept until every component moves to the tokens above. */
+  --color-void: var(--color-base);
+  --color-panel: var(--color-surface);
+  --color-panel-raised: var(--color-elevated);
+  --color-line: var(--color-border-strong);
+  --color-ink: var(--color-primary);
+  --color-ink-muted: var(--color-secondary);
+  --color-ink-faint: var(--color-tertiary);
+
+  --animate-fade-in: fade-in 300ms ease-out;
+  --animate-scrim-in: fade-in 200ms ease-out;
+  --animate-dialog-in: dialog-in 200ms ease-out;
+  --animate-section-in: section-in 200ms ease-in-out;
+  --animate-value-pulse: value-pulse 300ms ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+  }
+  @keyframes section-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  @keyframes value-pulse {
+    from {
+      transform: scale(1.05);
+    }
+  }
+}
+
+:root {
+  color-scheme: dark;
+}
+
+:root.light {
+  color-scheme: light;
+
+  --color-base: #fafaf9;
+  --color-surface: #ffffff;
+  --color-elevated: #f5f5f4;
+  --color-overlay: #ffffff;
+  --color-section: #fafaf9;
+  --color-glass: rgb(255 255 255 / 0.85);
+  --color-glass-border: #e7e5e4;
+  --color-scrim: rgb(12 10 9 / 0.2);
+
+  --color-border: #e7e5e4;
+  --color-border-subtle: #f5f5f4;
+  --color-border-strong: #d6d3d1;
+  --color-border-focus: rgb(6 182 212 / 0.4);
+
+  --color-primary: #1c1917;
+  --color-secondary: #57534e;
+  --color-tertiary: #a8a29e;
+  --color-disabled: #d6d3d1;
+
+  --color-accent: #0891b2;
+  --color-accent-hover: #06b6d4;
+  --color-accent-muted: rgb(8 145 178 / 0.08);
+  --color-accent-glow: rgb(8 145 178 / 0.1);
+  --color-on-accent: #ffffff;
+
+  --color-protected: #0891b2;
+  --color-cooperative: #059669;
+  --color-uncooperative: #d97706;
+
+  --color-sev-green-ink: #15803d;
+  --color-sev-blue-ink: #1d4ed8;
+  --color-sev-yellow-ink: #a16207;
+  --color-sev-orange-ink: #c2410c;
+  --color-sev-red-ink: #dc2626;
+}
+
+/* Soft halo in the element's --glow colour; applied in dark mode only. */
+@utility glow {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--glow, transparent) 25%, transparent);
+}
+
+/* Cross-fade every colour while the theme flips; the class is removed right after. */
+:root.theme-transition,
+:root.theme-transition * {
+  transition-property: color, background-color, border-color, box-shadow, fill, stroke !important;
+  transition-duration: 200ms !important;
+  transition-timing-function: ease !important;
 }
 
 html,
@@ -34,5 +156,62 @@ body,
 }
 
 body {
-  @apply bg-void text-ink font-sans antialiased;
+  @apply bg-base text-primary font-sans antialiased;
+}
+
+/* Range input: rounded track filled up to --fill, white thumb with an accent focus ring. */
+.range {
+  appearance: none;
+  background: transparent;
+}
+.range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), var(--color-elevated) var(--fill, 0%));
+}
+.range::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--color-elevated);
+}
+.range::-moz-range-progress {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--color-accent);
+}
+.range::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15), 0 1px 3px rgb(0 0 0 / 0.3);
+  transition: box-shadow 150ms ease-out;
+}
+.range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15), 0 1px 3px rgb(0 0 0 / 0.3);
+}
+.range:focus-visible {
+  outline: none;
+}
+.range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--color-accent), 0 1px 3px rgb(0 0 0 / 0.3);
+}
+.range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 2px var(--color-accent), 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
 }

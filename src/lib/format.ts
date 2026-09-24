@@ -43,7 +43,7 @@ export const CATEGORY_LABEL: Record<RsoListCategory, string> = {
 
 /** Hex colours for canvas/WebGL use; keep in sync with the @theme tokens in index.css. */
 export const CATEGORY_HEX: Record<RsoListCategory, string> = {
-  protected: '#22d3ee',
+  protected: '#06b6d4',
   cooperative: '#34d399',
   uncooperative: '#f59e0b',
 }
