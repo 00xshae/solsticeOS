@@ -33,6 +33,16 @@ describe('screening', () => {
     expect(threatened.contributors.map((c) => c.windowId)).toEqual(['TW-CARTOSAT-INSP1'])
     expect(objectThreat(rsoLists, 'CARTOSAT-3', 'threatening', DEMO_EPOCH_MS)).toBeNull()
   })
+
+  it('scopes an object rating by where its counterpart is listed', () => {
+    const lists = [...rsoLists, userOpposed(['INSP-2'])]
+    // RISAT-2B is threatened by an RSO on the analyst's own list, not the organisation's.
+    expect(objectThreat(lists, 'RISAT-2B', 'threatened', DEMO_EPOCH_MS, 'USER')).not.toBeNull()
+    expect(objectThreat(lists, 'RISAT-2B', 'threatened', DEMO_EPOCH_MS, 'ORG')).toBeNull()
+    // INSPECTOR-2 threatens an asset on the organisation's lists.
+    expect(objectThreat(lists, 'INSP-2', 'threatening', DEMO_EPOCH_MS, 'ORG')).not.toBeNull()
+    expect(objectThreat(lists, 'INSP-2', 'threatening', DEMO_EPOCH_MS, 'USER')).toBeNull()
+  })
 })
 
 describe('threat log assessment', () => {
