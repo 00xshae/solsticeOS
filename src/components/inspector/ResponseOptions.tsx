@@ -32,8 +32,8 @@ function useCoaMetrics(event: ConjunctionEvent) {
 function Metric({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="min-w-0">
-      <div className="font-mono text-[9px] uppercase tracking-widest text-ink-faint">{label}</div>
-      <div className={cn('truncate font-mono text-[12px] tabular-nums text-ink', tone)}>{value}</div>
+      <div className="text-[9px] font-medium uppercase tracking-widest text-tertiary">{label}</div>
+      <div className={cn('truncate font-mono text-[12px] font-medium tabular-nums text-primary', tone)}>{value}</div>
     </div>
   )
 }
@@ -47,37 +47,37 @@ function CoaCard({ m, selected, recommended }: { m: CoaMetrics; selected: boolea
       onClick={() => selectSequence(m.sequenceId)}
       aria-pressed={selected}
       className={cn(
-        'w-full rounded border p-2.5 text-left transition-colors',
-        selected ? 'border-protected bg-protected/10' : 'border-line hover:border-ink-faint',
+        'w-full rounded-xl border p-3 text-left transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus',
+        selected ? 'border-accent/40 bg-accent-muted' : 'border-border hover:border-border-strong',
         !m.feasible && 'opacity-70',
       )}
     >
-      <div className="mb-1 flex items-center gap-2">
-        <span className={cn('text-[13px] font-medium', selected ? 'text-protected' : 'text-ink')}>{sequence.name}</span>
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className={cn('text-[13px] font-semibold', selected ? 'text-accent' : 'text-primary')}>{sequence.name}</span>
         {recommended && (
-          <span className="rounded-full bg-sev-green/15 px-1.5 py-px font-mono text-[9px] uppercase tracking-wider text-sev-green">
+          <span className="rounded-full bg-sev-green/10 px-2 py-0.5 text-[9px] font-medium uppercase leading-none tracking-wider text-sev-green-ink">
             Recommended
           </span>
         )}
-        <span className="ml-auto flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-widest text-ink-faint">
+        <span className="ml-auto flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-widest text-tertiary">
           Post CSI <SeverityBadge index={m.postIndex} />
         </span>
       </div>
-      <p className="mb-2 text-[11px] leading-snug text-ink-muted">{sequence.summary}</p>
+      <p className="mb-2.5 text-[11px] leading-snug text-secondary">{sequence.summary}</p>
       <div className="grid grid-cols-3 gap-x-3 gap-y-1.5">
         <Metric label="Total Δv" value={`${m.totalDeltaVMps.toFixed(2)} m/s`} />
         <Metric
           label="Of budget"
           value={Number.isFinite(m.budgetShare) ? `${(m.budgetShare * 100).toFixed(1)}%` : '—'}
-          tone={m.budgetShare > 1 ? 'text-sev-orange' : undefined}
+          tone={m.budgetShare > 1 ? 'text-sev-orange-ink' : undefined}
         />
         <Metric label="Burn each" value={Number.isFinite(m.burnDurationS) ? `${m.burnDurationS.toFixed(0)} s` : '—'} />
         <Metric label="Decide within" value={hoursMinutes(m.decisionLeadMs)} />
-        <Metric label="Post miss" value={formatKm(m.postMissDistanceM)} tone="text-sev-green" />
-        <Metric label="Post Pc" value={formatPc(m.postPc)} tone="text-sev-green" />
+        <Metric label="Post miss" value={formatKm(m.postMissDistanceM)} tone="text-sev-green-ink" />
+        <Metric label="Post Pc" value={formatPc(m.postPc)} tone="text-sev-green-ink" />
       </div>
       {m.blocker && (
-        <p className="mt-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-sev-orange">
+        <p className="mt-2.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-sev-orange-ink">
           <TriangleAlert className="size-3" /> {m.blocker}
         </p>
       )}
@@ -109,19 +109,19 @@ function ExecuteDialog({ event, m, onClose }: { event: ConjunctionEvent; m: CoaM
         </>
       }
     >
-      <div className="space-y-3 px-4 py-4 text-[13px] text-ink-muted">
+      <div className="space-y-3 px-4 py-4 text-[13px] leading-relaxed text-secondary">
         <p>
-          Commit <span className="text-ink">{sequence.name}</span> for <span className="text-protected">{primary?.name}</span>.
+          Commit <span className="font-medium text-primary">{sequence.name}</span> for <span className="font-medium text-protected">{primary?.name}</span>.
           The plan is queued for upload and locked until you pick another course of action.
         </p>
-        <ul className="space-y-1 rounded border border-line bg-void/60 p-3 font-mono text-[11px]">
+        <ul className="space-y-1 rounded-lg border border-border bg-base p-3 font-mono text-[11px] tabular-nums text-primary">
           <li>Burn 1 · {formatUtc(Date.parse(b1.start))} UTC · +{b1.deltaVMps.toFixed(2)} m/s in-track</li>
           <li>Burn 2 · {formatUtc(Date.parse(b2.start))} UTC · −{b2.deltaVMps.toFixed(2)} m/s in-track</li>
           <li>
             Predicted at TCA · {formatKm(m.postMissDistanceM)} miss · Pc {formatPc(m.postPc)}
           </li>
         </ul>
-        <p className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-tertiary">
           Demo only: no command is sent to any spacecraft.
         </p>
       </div>
@@ -148,15 +148,16 @@ export function ResponseOptions({ event }: { event: ConjunctionEvent }) {
           <CoaCard key={m.sequenceId} m={m} selected={m.sequenceId === activeSequenceId} recommended={m.sequenceId === recommended} />
         ))}
         {!recommended && (
-          <p className="font-mono text-[10px] uppercase tracking-wider text-sev-orange">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-sev-orange-ink">
             No plan fits the current envelope and timeline.
           </p>
         )}
 
         {colaStatus === 'COMMITTED' && active ? (
-          <div className="space-y-2 rounded border border-sev-green/40 bg-sev-green/10 p-2.5">
-            <p className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-sev-green">
-              <CheckCircle2 className="size-3.5" /> Plan committed {committedAtMs && `· ${formatUtc(committedAtMs)} UTC`}
+          <div className="space-y-2.5 rounded-xl border border-sev-green/30 bg-sev-green/[0.06] p-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-medium text-sev-green-ink">
+              <CheckCircle2 className="size-3.5" /> Plan committed{' '}
+              {committedAtMs && <span className="font-mono tabular-nums">· {formatUtc(committedAtMs)} UTC</span>}
             </p>
             <Button variant="primary" onClick={() => setComplianceOpen(true)}>
               <FileText className="size-3.5" /> Generate IN-SPACe NGP filing
