@@ -1,8 +1,8 @@
-// Maps a COLA sequence onto a 0..1 timeline track. Burns last seconds and coasts last a day,
+// Maps a burn/coast plan onto a 0..1 timeline track. Burns last seconds and coasts last a day,
 // so a proportional layout would hide the burns; instead burns get a fixed slot and coasts
 // share the rest by sqrt(duration). Time <-> position is linear within each segment.
-import type { ManeuverSequence, ManeuverStep } from '@/types'
-import { isBurn } from './maneuver'
+import type { ManeuverStep } from '@/types'
+import { isBurn, type StepPlan } from './maneuver'
 
 export const BURN_SLOT = 0.06
 
@@ -14,7 +14,7 @@ export interface TimelineSegment {
   endFrac: number
 }
 
-export function layoutTimeline(sequence: ManeuverSequence): TimelineSegment[] {
+export function layoutTimeline(sequence: StepPlan): TimelineSegment[] {
   const steps = sequence.steps
   const burns = steps.filter((s) => isBurn(s.phase)).length
   const coastShare = 1 - burns * BURN_SLOT
