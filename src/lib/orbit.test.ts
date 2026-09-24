@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { DEMO_EPOCH_MS, rsoById } from '@/data'
 import type { OrbitalElements } from '@/types'
-import { EARTH_RADIUS_KM, geoAt, gmstRad, orbitalPeriodS, orbitRing, propagateEci } from './orbit'
+import { EARTH_RADIUS_KM, elementsAt, geoAt, gmstRad, orbitalPeriodS, orbitRing, propagateEci } from './orbit'
 
 const circular: OrbitalElements = {
   epoch: '2026-10-01T00:00:00Z',
@@ -60,5 +60,15 @@ describe('geodetic conversion', () => {
     const ring = orbitRing(circular, epochMs, 90)
     expect(ring).toHaveLength(91)
     expect(ring[0]!.lat).toBeCloseTo(ring[90]!.lat, 0)
+  })
+})
+
+describe('elementsAt', () => {
+  it('re-epochs without moving the propagated position', () => {
+    const later = epochMs + 7.3 * 3_600_000
+    const moved = elementsAt(circular, epochMs + 3 * 3_600_000)
+    const a = propagateEci(circular, later)
+    const b = propagateEci(moved, later)
+    expect(Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)).toBeLessThan(1e-6)
   })
 })

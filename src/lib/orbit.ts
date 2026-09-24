@@ -40,7 +40,7 @@ function solveKepler(meanAnomaly: number, ecc: number): number {
 }
 
 /** J2 secular rates in rad/s for RAAN, argument of perigee and mean anomaly. */
-function j2Rates(el: OrbitalElements) {
+export function j2Rates(el: OrbitalElements) {
   const n = meanMotionRadS(el.smaKm)
   const p = el.smaKm * (1 - el.ecc ** 2)
   const k = 1.5 * n * J2 * (EARTH_RADIUS_KM / p) ** 2
@@ -50,6 +50,21 @@ function j2Rates(el: OrbitalElements) {
     raan: -k * cosI,
     argp: k * (2 - 2.5 * sinI2),
     mean: n + k * Math.sqrt(1 - el.ecc ** 2) * (1 - 1.5 * sinI2),
+  }
+}
+
+const wrapDeg = (deg: number) => ((deg % 360) + 360) % 360
+
+/** Mean elements re-epoched to `timeMs` by applying the J2 secular drift. */
+export function elementsAt(el: OrbitalElements, timeMs: number): OrbitalElements {
+  const dt = (timeMs - Date.parse(el.epoch)) / 1000
+  const rates = j2Rates(el)
+  return {
+    ...el,
+    epoch: new Date(timeMs).toISOString(),
+    raanDeg: wrapDeg(el.raanDeg + (rates.raan * dt) / DEG),
+    argpDeg: wrapDeg(el.argpDeg + (rates.argp * dt) / DEG),
+    meanAnomalyDeg: wrapDeg(el.meanAnomalyDeg + (rates.mean * dt) / DEG),
   }
 }
 
