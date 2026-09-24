@@ -1,5 +1,8 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource/rajdhani/500.css';
+@import '@fontsource/rajdhani/600.css';
+@import '@fontsource/rajdhani/700.css';
 @import 'tailwindcss';
 
 @font-face {
@@ -20,9 +23,13 @@
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
   --font-display: 'Conthrax', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Chrome voice: nav tabs, section kickers, page headers — anything that sits next to the
+     Conthrax wordmark and should read as the same control-room language, not body copy. */
+  --font-nav: 'Rajdhani', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 
-  /* Surfaces, back to front */
-  --color-base: #000000;
+  /* Surfaces, back to front. Base carries a whisper of cyan so dark mode reads as deep graphite,
+     not a flat black rectangle; surface/elevated/overlay stay neutral so severity colours don't shift. */
+  --color-base: #07090b;
   --color-surface: #0a0a0a;
   --color-elevated: #141414;
   --color-overlay: #1a1a1a;
@@ -157,6 +164,28 @@ body,
 
 body {
   @apply bg-base text-primary font-sans antialiased;
+  position: relative;
+}
+
+/* Soft cyan bloom top-center fading into the deep-graphite base, so dark mode reads as a lit
+   control room rather than a flat rectangle. Light mode stays clean/paper-like. */
+:root:not(.light) body {
+  background-image: radial-gradient(ellipse 1200px 600px at 50% -10%, rgb(6 182 212 / 0.05), transparent 60%);
+}
+
+/* Filmic grain: fixed, non-interactive noise over the whole app. Subtle on purpose — texture,
+   not static — and dark mode only, so dense data screens stay legible underneath it. */
+:root:not(.light) body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Range input: rounded track filled up to --fill, white thumb with an accent focus ring. */
