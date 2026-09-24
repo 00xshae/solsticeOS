@@ -222,7 +222,7 @@ export function ConjunctionCard({ event }: { event: ConjunctionEvent }) {
       <Section title="Severity breakdown">
         <SeverityBreakdownView breakdown={breakdown} />
       </Section>
-      <Section title={`Screening history · ${event.assessments.length}`} defaultOpen={false}>
+      <Section title={`Screening history · ${event.assessments.length}`}>
         <AssessmentHistory event={event} />
       </Section>
     </div>
