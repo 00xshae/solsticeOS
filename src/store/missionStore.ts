@@ -6,7 +6,7 @@
 import { create } from 'zustand'
 import { conjunctionById, conjunctions, DEMO_EPOCH_MS, rsoById, rsoLists, rsoObjects, sequenceById } from '@/data'
 import { aggregateSeverity, computeSeverity } from '@/lib/severity'
-import { categoriesOf } from '@/lib/threatScreen'
+import { assessThreats, categoriesOf, type LoggedRatings } from '@/lib/threatScreen'
 import type {
   ConjunctionEvent,
   ListScope,
@@ -16,6 +16,8 @@ import type {
   RSOObject,
   RsoListCategory,
   SeverityBreakdown,
+  ThreatLogEntry,
+  ThreatLogReason,
 } from '@/types'
 
 export type SpeedMultiplier = 1 | 10 | 60
@@ -38,6 +40,13 @@ export interface MissionState {
   openListId: string | null
   /** Seeded org lists plus any the analyst creates; edits last for the session. */
   lists: RSOList[]
+
+  /** Recorded threat ratings, newest first. */
+  threatLog: ThreatLogEntry[]
+  /** Last logged rating per object and role, to detect changes. */
+  loggedRatings: LoggedRatings
+  /** Mission-clock hour of the last scheduled reassessment. */
+  lastAssessedHour: number
 
   searchQuery: string
   /** Objects the analyst has added from search: listed in the sidebar and drawn on the globe. */
@@ -96,6 +105,37 @@ export interface MissionActions {
 
 export type MissionStore = MissionState & MissionActions
 
+const HOUR_MS = 3_600_000
+let logCounter = 0
+
+type LogState = Pick<MissionState, 'threatLog' | 'loggedRatings'>
+
+/** Re-rates everything at `nowMs` and prepends any resulting entries to the log. */
+function withAssessment(
+  s: LogState,
+  lists: RSOList[],
+  nowMs: number,
+  reason: ThreatLogReason,
+  focusIds: string[] = [],
+): LogState {
+  const { entries, ratings } = assessThreats(lists, s.loggedRatings, nowMs, reason, focusIds)
+  const stamped = entries.map((e) => ({ ...e, id: `LOG-${++logCounter}` }))
+  return { threatLog: [...stamped.reverse(), ...s.threatLog], loggedRatings: ratings }
+}
+
+/**
+ * History before the demo starts: the scenario objects joined their lists two days earlier,
+ * and hourly reassessments have been recording the ratings climb as the windows approach.
+ */
+function seedThreatLog(): LogState {
+  let log: LogState = { threatLog: [], loggedRatings: {} }
+  log = withAssessment(log, rsoLists, DEMO_EPOCH_MS - 48 * HOUR_MS, 'MEMBER_ADDED')
+  for (const hoursBefore of [36, 24, 12, 6, 0]) {
+    log = withAssessment(log, rsoLists, DEMO_EPOCH_MS - hoursBefore * HOUR_MS, 'REASSESSED')
+  }
+  return log
+}
+
 export const initialMissionState: MissionState = {
   simTimeMs: DEMO_EPOCH_MS,
   playing: true,
@@ -103,6 +143,8 @@ export const initialMissionState: MissionState = {
   view: 'globe',
   openListId: null,
   lists: rsoLists,
+  ...seedThreatLog(),
+  lastAssessedHour: Math.floor(DEMO_EPOCH_MS / HOUR_MS),
   searchQuery: '',
   trackedIds: [],
   selectedRsoId: null,
@@ -133,8 +175,16 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
   ...initialMissionState,
 
   tick: (realElapsedMs) => {
-    const { playing, speed, simTimeMs } = get()
-    if (playing) set({ simTimeMs: simTimeMs + realElapsedMs * speed })
+    const s = get()
+    if (!s.playing) return
+    const simTimeMs = s.simTimeMs + realElapsedMs * s.speed
+    const hour = Math.floor(simTimeMs / HOUR_MS)
+    // Ratings are reassessed hourly on the mission clock, as in Solstice.
+    if (hour > s.lastAssessedHour) {
+      set({ simTimeMs, lastAssessedHour: hour, ...withAssessment(s, s.lists, hour * HOUR_MS, 'REASSESSED') })
+    } else {
+      set({ simTimeMs })
+    }
   },
   togglePlaying: () => set((s) => ({ playing: !s.playing })),
   setSpeed: (speed) => set({ speed }),
@@ -152,17 +202,28 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
   // Only the analyst's own lists can be deleted; org lists are managed elsewhere.
   deleteList: (id) =>
     set((s) => {
-      if (s.lists.find((l) => l.id === id)?.scope !== 'USER') return {}
-      return { lists: s.lists.filter((l) => l.id !== id), ...(s.openListId === id && { openListId: null }) }
+      const list = s.lists.find((l) => l.id === id)
+      if (list?.scope !== 'USER') return {}
+      const lists = s.lists.filter((l) => l.id !== id)
+      return {
+        lists,
+        ...(s.openListId === id && { openListId: null }),
+        ...withAssessment(s, lists, s.simTimeMs, 'MEMBER_REMOVED', list.memberIds),
+      }
     }),
-  addListMember: (listId, rsoId) => {
-    if (!rsoById.has(rsoId)) return
-    set((s) => ({
-      lists: updateList(s.lists, listId, (l) => ({ memberIds: l.memberIds.includes(rsoId) ? l.memberIds : [...l.memberIds, rsoId] })),
-    }))
-  },
+  addListMember: (listId, rsoId) =>
+    set((s) => {
+      const list = s.lists.find((l) => l.id === listId)
+      if (!list || !rsoById.has(rsoId) || list.memberIds.includes(rsoId)) return {}
+      const lists = updateList(s.lists, listId, (l) => ({ memberIds: [...l.memberIds, rsoId] }))
+      return { lists, ...withAssessment(s, lists, s.simTimeMs, 'MEMBER_ADDED', [rsoId]) }
+    }),
   removeListMember: (listId, rsoId) =>
-    set((s) => ({ lists: updateList(s.lists, listId, (l) => ({ memberIds: l.memberIds.filter((m) => m !== rsoId) })) })),
+    set((s) => {
+      if (!s.lists.find((l) => l.id === listId)?.memberIds.includes(rsoId)) return {}
+      const lists = updateList(s.lists, listId, (l) => ({ memberIds: l.memberIds.filter((m) => m !== rsoId) }))
+      return { lists, ...withAssessment(s, lists, s.simTimeMs, 'MEMBER_REMOVED', [rsoId]) }
+    }),
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   trackRso: (id) => set((s) => ({ trackedIds: withTracked(s.trackedIds, id) })),
