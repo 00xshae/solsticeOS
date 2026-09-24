@@ -6,6 +6,7 @@ import { ConjunctionCard } from './ConjunctionCard'
 import { ConjunctionList } from './ConjunctionList'
 import { ManeuverEnvelopeEditor } from './ManeuverEnvelopeEditor'
 import { ObjectDetails } from './ObjectDetails'
+import { ResponseOptions } from './ResponseOptions'
 
 /**
  * Right-hand inspector. With nothing selected it lists every conjunction window; selecting an
@@ -22,7 +23,12 @@ export function InspectorPanel() {
 
   return (
     <aside className="flex w-[380px] shrink-0 flex-col overflow-y-auto border-l border-line bg-panel" aria-label="Inspector">
-      {conjunction && <ConjunctionCard key={conjunction.id} event={conjunction} />}
+      {conjunction && (
+        <>
+          <ConjunctionCard key={conjunction.id} event={conjunction} />
+          <ResponseOptions event={conjunction} />
+        </>
+      )}
       {object && (
         <>
           <ObjectDetails object={object} />
