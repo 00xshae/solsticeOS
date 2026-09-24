@@ -41,6 +41,8 @@ export interface MissionState {
   followSelected: boolean
 
   colaStatus: ColaStatus
+  /** Mission-clock time the active plan was committed; null while planning. */
+  committedAtMs: number | null
   complianceOpen: boolean
 }
 
@@ -83,6 +85,7 @@ export const initialMissionState: MissionState = {
   screeningRadiusOverrideKm: null,
   followSelected: false,
   colaStatus: 'PLANNING',
+  committedAtMs: null,
   complianceOpen: false,
 }
 
@@ -113,13 +116,14 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
       activeSequenceId: event?.sequenceIds[0] ?? null,
       scrubTimeMs: null,
       colaStatus: 'PLANNING',
+      committedAtMs: null,
       ...(event && { selectedRsoId: event.primaryId }),
     })
   },
   selectSequence: (id) => {
     const sequence = sequenceById.get(id)
     if (!sequence || sequence.conjunctionId !== get().activeConjunctionId) return
-    set({ activeSequenceId: id, scrubTimeMs: null, colaStatus: 'PLANNING' })
+    set({ activeSequenceId: id, scrubTimeMs: null, colaStatus: 'PLANNING', committedAtMs: null })
   },
   scrubTo: (timeMs) => {
     const sequence = selectActiveSequence(get())
@@ -140,7 +144,8 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
   setScreeningRadius: (screeningRadiusOverrideKm) => set({ screeningRadiusOverrideKm }),
 
   commitCola: () => {
-    if (get().activeSequenceId) set({ colaStatus: 'COMMITTED' })
+    const { activeSequenceId, simTimeMs } = get()
+    if (activeSequenceId) set({ colaStatus: 'COMMITTED', committedAtMs: simTimeMs })
   },
   toggleFollow: () => set((s) => ({ followSelected: !s.followSelected })),
   setComplianceOpen: (complianceOpen) => set({ complianceOpen }),
