@@ -50,6 +50,9 @@ export const SEGMENT_LABEL: Record<CatalogSegment, string> = {
 
 export const SEGMENT_CODE: Record<CatalogSegment, string> = { IND: 'IND', PAY: 'PAY', RB: 'R/B', DEB: 'DEB' }
 
+/** Object type as Solstice prints it next to a NORAD id, e.g. "41917 · PAYLOAD". */
+export const OBJECT_TYPE: Record<CatalogSegment, string> = { IND: 'PAYLOAD', PAY: 'PAYLOAD', RB: 'ROCKET BODY', DEB: 'DEBRIS' }
+
 export const CATEGORY_LABEL: Record<RsoListCategory, string> = {
   owned: 'Owned',
   allied: 'Allied',
