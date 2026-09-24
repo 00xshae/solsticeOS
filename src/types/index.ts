@@ -68,7 +68,7 @@ export interface RSOList {
   id: string
   name: string
   category: RsoListCategory
-  scope: 'ORG' | 'USER'
+  scope: ListScope
   memberIds: string[]
 }
 
@@ -211,6 +211,95 @@ export interface SeverityLogEntry {
   index: number
   contributingConjunctionIds: string[]
   config: SeverityConfig
+}
+
+// ---------------------------------------------------------------------------
+// Threat windows (rendezvous / proximity operations)
+// ---------------------------------------------------------------------------
+
+/**
+ * A precomputed two-burn phasing transfer that takes an opposed object from its own orbit to
+ * a short standoff behind the target. Burn 1 enters the phasing orbit, Burn 2 matches the
+ * target's orbit; the final coast is the chaser holding station.
+ */
+export interface InterceptSequence {
+  id: string
+  windowId: string
+  name: string
+  totalDeltaVMps: number
+  /** Range to the target after Burn 2, from the propagator. */
+  standoffKm: number
+  steps: [ManeuverStep, ManeuverStep, ManeuverStep, ManeuverStep, ManeuverStep]
+}
+
+/**
+ * Period during which an opposed object can reach an owned or allied target. Only shown once
+ * the target sits in an owned or allied list and the chaser sits in an opposed list.
+ */
+export interface ThreatWindow {
+  id: string
+  /** Owned or allied object that could be approached. */
+  targetId: string
+  /** Opposed object able to manoeuvre onto it. */
+  opposedId: string
+  /** Earliest Burn 1 across the window's sequences. */
+  start: IsoUtc
+  /** Latest arrival across the window's sequences. */
+  end: IsoUtc
+  transferType: 'PHASING' | 'LAMBERT'
+  reasoning: string | null
+  sequenceIds: string[]
+}
+
+export type ThreatFactor = 'cheap' | 'quick' | 'soon'
+
+/** Tunables recorded with every rating, as in the Solstice rating config. */
+export interface ThreatConfig {
+  base: Record<ThreatFactor, number>
+  weights: Record<ThreatFactor, number>
+  deltaVLimitMps: number
+  projectionPeriodHours: number
+}
+
+export interface ThreatTerm {
+  factor: ThreatFactor
+  score: number
+  /** Weighted share of the rating; contributions sum to `rating`. */
+  contribution: number
+}
+
+export interface ThreatRating {
+  /** 0-100 window threat rating. */
+  rating: number
+  band: SeverityBand
+  terms: Record<ThreatFactor, ThreatTerm>
+  strongest: ThreatFactor
+  cheapestDeltaVMps: number
+  quickestTransitS: number
+  soonestArrivalMs: number
+}
+
+/** Owned and allied objects are "threatened"; opposed objects are "threatening". */
+export type ThreatRole = 'threatened' | 'threatening'
+
+/** Which lists a rating is drawn from: the organisation's, or the analyst's own. */
+export type ListScope = 'ORG' | 'USER'
+
+export type ThreatLogReason = 'MEMBER_ADDED' | 'MEMBER_REMOVED' | 'REASSESSED'
+
+export interface ThreatLogEntry {
+  id: string
+  objectId: string
+  role: ThreatRole
+  reason: ThreatLogReason
+  recordedAt: IsoUtc
+  /** Null when this is the object's first recorded rating. */
+  previous: number | null
+  /** Null once no window rates the object. */
+  rating: number | null
+  /** Windows behind the rating, worst first. */
+  contributors: { windowId: string; rating: number }[]
+  config: ThreatConfig
 }
 
 // ---------------------------------------------------------------------------
