@@ -192,7 +192,6 @@ export function GlobeViewport() {
       .atmosphereAltitude(0.18)
       .polygonsData([])
       .polygonAltitude(0.006)
-      .polygonCapColor(countryColor)
       .polygonSideColor(() => 'rgba(0, 0, 0, 0)')
       .polygonStrokeColor(() => 'rgba(250, 250, 249, 0.35)')
       .polygonsTransitionDuration(0)
@@ -359,13 +358,17 @@ export function GlobeViewport() {
       material.transparent = true
       material.opacity = 0.35
       material.needsUpdate = true
-      globe.showGraticules(true).polygonsData([])
+      // Country outlines only: transparent fill, the graticule + stroke do the work.
+      globe.polygonCapColor(() => 'rgba(0, 0, 0, 0)').showGraticules(true)
+      loadCountries().then((features) => {
+        if (!cancelled) globe.polygonsData(features)
+      })
     } else if (surface === 'political') {
       material.color = new THREE.Color(0x000000)
       material.transparent = false
       material.opacity = 1
       material.needsUpdate = true
-      globe.showGraticules(false)
+      globe.polygonCapColor(countryColor).showGraticules(false)
       loadCountries().then((features) => {
         if (!cancelled) globe.polygonsData(features)
       })
