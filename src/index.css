@@ -2,6 +2,14 @@
 @import '@fontsource-variable/jetbrains-mono';
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'Conthrax';
+  src: url('/fonts/Conthrax-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Orbital Noir: dark-first tokens with a warm stone light mode. `.light` on <html> swaps the
    theme. Severity band fills are identical in both modes (the globe reads them from format.ts);
    the `-ink` variants are the same hues darkened for legible text on white. */
@@ -11,6 +19,7 @@
 @theme {
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --font-display: 'Conthrax', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 
   /* Surfaces, back to front */
   --color-base: #000000;
