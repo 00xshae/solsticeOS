@@ -84,7 +84,7 @@ function satMeshFactory() {
 function labelElement(object: RSOObject) {
   const el = document.createElement('div')
   el.className =
-    'pointer-events-none -translate-y-5 animate-fade-in whitespace-nowrap rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm'
+    'pointer-events-none -translate-y-5 whitespace-nowrap rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm'
   el.textContent = object.name
   return el
 }
