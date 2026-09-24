@@ -1,6 +1,7 @@
 import { ComplianceModal } from '@/components/compliance/ComplianceModal'
 import { ThreatRatingModal } from '@/components/threat/ThreatRatingModal'
 import { CatalogSidebar } from '@/components/layout/CatalogSidebar'
+import { FloatingControls } from '@/components/layout/FloatingControls'
 import { Header } from '@/components/layout/Header'
 import { GlobeViewport } from '@/components/globe/GlobeViewport'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
@@ -33,6 +34,7 @@ export default function App() {
       </div>
       <ComplianceModal />
       <ThreatRatingModal />
+      <FloatingControls />
     </div>
   )
 }
