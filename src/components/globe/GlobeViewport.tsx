@@ -8,14 +8,17 @@ import { maneuveredElementsAt } from '@/lib/maneuver'
 import { EARTH_RADIUS_KM, geoAt, orbitRing, type GeoPoint } from '@/lib/orbit'
 import {
   selectActiveConjunction,
+  selectActiveIntercept,
   selectActiveSequence,
+  selectActiveThreatWindow,
   selectDisplayTimeMs,
   selectSeverity,
+  selectWindowRating,
   useMissionStore,
   type MissionState,
 } from '@/store/missionStore'
 import type { OrbitalElements, RSOObject } from '@/types'
-import { buildPlanOverlay, type OverlayMarker, type OverlayPath } from './planOverlay'
+import { buildInterceptOverlay, buildPlanOverlay, type OverlayMarker, type OverlayPath } from './planOverlay'
 
 const HOME_VIEW = { lat: 18, lng: 79, altitude: 2.6 }
 const OVERLAY_REFRESH_MS = 250
@@ -89,13 +92,27 @@ function labelElement(object: RSOObject) {
   return el
 }
 
-/** Elements to propagate for an object at the display time, honouring the active COLA plan. */
+/**
+ * Elements to propagate for an object at the display time: the owned asset flies its COLA
+ * plan, and a threat window's chaser flies the selected intercept.
+ */
 function effectiveElements(s: MissionState, object: RSOObject, timeMs: number): OrbitalElements {
   const conj = selectActiveConjunction(s)
   const sequence = selectActiveSequence(s)
-  return conj && sequence && conj.primaryId === object.id
-    ? maneuveredElementsAt(object.elements, sequence, timeMs)
-    : object.elements
+  if (conj && sequence && conj.primaryId === object.id) return maneuveredElementsAt(object.elements, sequence, timeMs)
+  const threat = selectActiveThreatWindow(s)
+  const intercept = selectActiveIntercept(s)
+  if (threat && intercept && threat.opposedId === object.id) return maneuveredElementsAt(object.elements, intercept, timeMs)
+  return object.elements
+}
+
+/** Colour of the pair's highlighted ring and overlay: the active pair's rating band. */
+function pairHex(s: MissionState): { id: string; hex: string } | null {
+  const conj = selectActiveConjunction(s)
+  if (conj) return { id: conj.secondaryId, hex: SEVERITY_HEX[selectSeverity(s, conj).band] }
+  const threat = selectActiveThreatWindow(s)
+  const rating = threat && selectWindowRating(s, threat)
+  return threat && rating ? { id: threat.opposedId, hex: SEVERITY_HEX[rating.band] } : null
 }
 
 export function GlobeViewport() {
@@ -181,8 +198,7 @@ export function GlobeViewport() {
     }
 
     const ringsFor = (s: MissionState, timeMs: number): OverlayPath[] => {
-      const conj = selectActiveConjunction(s)
-      const severityHex = conj ? SEVERITY_HEX[selectSeverity(s, conj).band] : null
+      const pair = pairHex(s)
       return s.trackedIds.flatMap((id) => {
         const object = rsoById.get(id)
         if (!object) return []
@@ -191,8 +207,8 @@ export function GlobeViewport() {
             id,
             points: orbitRing(effectiveElements(s, object, timeMs), timeMs),
             color:
-              conj?.secondaryId === id && severityHex
-                ? severityHex
+              pair?.id === id
+                ? pair.hex
                 : id === s.selectedRsoId
                   ? SELECTED_RING_COLOR
                   : RING_COLOR,
@@ -207,12 +223,18 @@ export function GlobeViewport() {
     const syncPlan = (s: MissionState) => {
       const conj = selectActiveConjunction(s)
       const sequence = selectActiveSequence(s)
-      const key = conj && sequence ? sequence.id : ''
+      const threat = selectActiveThreatWindow(s)
+      const intercept = selectActiveIntercept(s)
+      const hex = pairHex(s)?.hex ?? '#a8a29e'
+      // Key on the band too, so the overlay recolours when the rating crosses a band.
+      const key = conj && sequence ? sequence.id : threat && intercept ? `${intercept.id}:${hex}` : ''
       if ((plan?.key ?? '') === key) return
       plan =
         conj && sequence
-          ? { key, ...buildPlanOverlay(conj, sequence, SEVERITY_HEX[selectSeverity(s, conj).band], toAlt) }
-          : null
+          ? { key, ...buildPlanOverlay(conj, sequence, hex, toAlt) }
+          : threat && intercept
+            ? { key, ...buildInterceptOverlay(threat, intercept, hex, toAlt) }
+            : null
     }
 
     let frame = 0
@@ -305,6 +327,10 @@ function GlobeLegend() {
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-3 rounded-full bg-[#67e8f9] light:bg-cyan-600" />
           COLA arc
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 border-t-2 border-dashed border-sev-red" />
+          Intercept
         </span>
       </div>
     </div>
