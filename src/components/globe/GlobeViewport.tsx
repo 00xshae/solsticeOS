@@ -296,7 +296,7 @@ export function GlobeViewport() {
 function GlobeLegend() {
   return (
     <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-glass-border bg-glass px-3 py-2 backdrop-blur-xl light:shadow-lg">
-      <div className="mb-1.5 text-[10px] text-tertiary">Earth-fixed · Kepler + J₂</div>
+      <div className="mb-1.5 text-[10px] text-secondary">Earth-fixed · Kepler + J₂</div>
       <div className="flex gap-3 text-[10px] font-medium text-primary">
         <span className="flex items-center gap-1.5">
           <span className="size-2 rounded-full bg-white shadow-[0_0_6px_2px_rgba(255,255,255,0.6)] light:shadow-none light:ring-1 light:ring-stone-400" />
