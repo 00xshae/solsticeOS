@@ -5,9 +5,11 @@ import { GlobeViewport } from '@/components/globe/GlobeViewport'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
 import { ManeuverTimeline } from '@/components/timeline/ManeuverTimeline'
 import { useMissionClock } from '@/hooks/useMissionClock'
+import { useApplyTheme } from '@/store/themeStore'
 
 export default function App() {
   useMissionClock()
+  useApplyTheme()
   return (
     <div className="flex h-full flex-col">
       <Header />
