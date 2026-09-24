@@ -22,7 +22,7 @@ export function InspectorPanel() {
   )
 
   return (
-    <aside className="flex w-[380px] shrink-0 flex-col overflow-y-auto border-l border-line bg-panel" aria-label="Inspector">
+    <aside className="flex w-[380px] shrink-0 flex-col overflow-y-auto border-l border-border bg-surface" aria-label="Inspector">
       {conjunction && (
         <>
           <ConjunctionCard key={conjunction.id} event={conjunction} />
@@ -37,7 +37,7 @@ export function InspectorPanel() {
       )}
       <Section title={object ? `Conjunction windows · ${objectEvents.length}` : 'Conjunction windows'}>
         {!object && (
-          <p className="px-3 pt-2 text-[12px] text-ink-muted">
+          <p className="px-3 pt-2.5 text-[12px] leading-relaxed text-secondary">
             Screened only for protected × uncooperative pairs. Select a window to inspect its severity.
           </p>
         )}
