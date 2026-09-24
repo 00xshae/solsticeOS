@@ -19,11 +19,11 @@ import type { ConjunctionEvent, ManeuverPhase, ManeuverSequence } from '@/types'
 const PLAYBACK_SECONDS = 20
 
 const PHASE_CLASS: Record<ManeuverPhase, string> = {
-  COAST_MEAN_PRE: 'bg-panel-raised text-ink-muted',
-  BURN_1: 'bg-sev-orange/80 text-void',
-  COAST_EPHEMERIS: 'bg-protected/25 text-protected',
-  BURN_2: 'bg-sev-orange/80 text-void',
-  COAST_MEAN_POST: 'bg-panel-raised text-ink-muted',
+  COAST_MEAN_PRE: 'bg-elevated text-secondary',
+  BURN_1: 'bg-sev-orange/85 text-stone-950',
+  COAST_EPHEMERIS: 'bg-accent/20 text-accent',
+  BURN_2: 'bg-sev-orange/85 text-stone-950',
+  COAST_MEAN_POST: 'bg-elevated text-secondary',
 }
 
 function durationLabel(ms: number) {
@@ -53,15 +53,15 @@ function CoaTabs({ event }: { event: ConjunctionEvent }) {
             aria-selected={activeId === id}
             onClick={() => selectSequence(id)}
             className={cn(
-              'rounded border px-2 py-1 text-left font-mono text-[10px] uppercase tracking-wider',
-              activeId === id ? 'border-protected bg-protected/10 text-protected' : 'border-line text-ink-muted hover:text-ink',
+              'rounded-lg border px-2.5 py-1 text-left text-[11px] font-medium transition-colors duration-150 ease-out',
+              activeId === id ? 'border-accent/40 bg-accent-muted text-accent' : 'border-border text-secondary hover:border-border-strong hover:text-primary',
             )}
           >
             <span className="flex items-center gap-1">
-              {!feasible && <TriangleAlert className="size-3 text-sev-orange" aria-label="Exceeds envelope" />}
+              {!feasible && <TriangleAlert className="size-3 text-sev-orange-ink" aria-label="Exceeds envelope" />}
               {seq.name}
             </span>
-            <span className="text-ink-faint normal-case tracking-normal">
+            <span className="block font-mono text-[10px] tabular-nums text-tertiary">
               Δv {seq.totalDeltaVMps.toFixed(2)} m/s · {formatKm(seq.postMissDistanceM)}
             </span>
           </button>
@@ -74,8 +74,8 @@ function CoaTabs({ event }: { event: ConjunctionEvent }) {
 export function Readout({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div>
-      <div className="font-mono text-[9px] uppercase tracking-widest text-ink-faint">{label}</div>
-      <div className={cn('font-mono text-xs tabular-nums text-ink', tone)}>{value}</div>
+      <div className="text-[9px] font-medium uppercase tracking-widest text-tertiary">{label}</div>
+      <div className={cn('font-mono text-xs font-medium tabular-nums text-primary', tone)}>{value}</div>
     </div>
   )
 }
@@ -95,11 +95,11 @@ function Readouts({ event, sequence }: { event: ConjunctionEvent; sequence: Mane
   return (
     <div className="grid grid-cols-6 gap-3">
       <Readout label="Display time (UTC)" value={formatUtc(t)} />
-      <Readout label="Phase" value={step.label} tone={isBurn(step.phase) ? 'text-sev-orange' : undefined} />
+      <Readout label="Phase" value={step.label} tone={isBurn(step.phase) ? 'text-sev-orange-ink' : undefined} />
       <Readout label="TCA" value={formatCountdown(Date.parse(event.tca), t)} />
       <Readout label="Δv spent" value={`${deltaVSpentMps(sequence, t).toFixed(2)} / ${sequence.totalDeltaVMps.toFixed(2)} m/s`} />
-      <Readout label="Offset vs nominal" value={formatKm(separationKm * 1000)} tone="text-protected" />
-      <Readout label={`Range to ${secondary.name}`} value={formatKm(rangeKm * 1000)} tone={rangeKm < 5 ? 'text-sev-red' : undefined} />
+      <Readout label="Offset vs nominal" value={formatKm(separationKm * 1000)} tone="text-accent" />
+      <Readout label={`Range to ${secondary.name}`} value={formatKm(rangeKm * 1000)} tone={rangeKm < 5 ? 'text-sev-red-ink' : undefined} />
     </div>
   )
 }
@@ -139,33 +139,38 @@ export function Track({ plan, markerMs, markerLabel }: { plan: StepPlan; markerM
         if (delta) scrubTo(fracToTime(layout, displayFrac + delta))
       }}
     >
-      <div className="absolute inset-x-0 top-0 flex h-9 overflow-hidden rounded">
+      <div className="absolute inset-x-0 top-0 flex h-9 overflow-hidden rounded-lg">
         {layout.map((seg) => (
           <div
             key={seg.step.phase}
-            className={cn('flex min-w-0 flex-col justify-center border-r border-void px-1.5', PHASE_CLASS[seg.step.phase])}
+            className={cn('flex min-w-0 flex-col justify-center border-r border-surface px-1.5 last:border-r-0', PHASE_CLASS[seg.step.phase])}
             style={{ width: `${(seg.endFrac - seg.startFrac) * 100}%` }}
             title={`${seg.step.label} · ${seg.step.propagator}`}
           >
-            <span className="truncate font-mono text-[9px] font-semibold uppercase tracking-wider">
+            <span className="truncate text-[9px] font-semibold uppercase tracking-wider">
               {isBurn(seg.step.phase) ? seg.step.label.replace(/ \(.*\)$/, '') : seg.step.label}
             </span>
-            <span className="truncate font-mono text-[9px] opacity-75">
+            <span className="truncate font-mono text-[9px] tabular-nums opacity-75">
               {isBurn(seg.step.phase) ? `${seg.step.deltaVMps.toFixed(2)} m/s` : durationLabel(seg.endMs - seg.startMs)}
             </span>
           </div>
         ))}
       </div>
 
-      <Marker frac={markerFrac} className="bg-sev-red" label={markerLabel} labelClass="text-sev-red" />
+      <Marker frac={markerFrac} className="bg-sev-red" label={markerLabel} labelClass="text-sev-red-ink" />
       {clockFrac > 0 && clockFrac < 1 && (
         <Marker frac={clockFrac} className="bg-cooperative/70" label="NOW" labelClass="text-cooperative" />
       )}
       <div
-        className="pointer-events-none absolute -top-1 h-11 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_6px_white]"
+        className={cn(
+          'pointer-events-none absolute -top-1 h-11 w-0.5 -translate-x-1/2 rounded-full bg-white transition-[box-shadow,opacity] duration-150 ease-out light:bg-stone-900',
+          scrubbing
+            ? 'shadow-[0_0_12px_rgba(255,255,255,0.8)] light:shadow-[0_0_8px_rgba(28,25,23,0.35)]'
+            : 'shadow-[0_0_8px_rgba(255,255,255,0.5)] light:shadow-none',
+        )}
         style={{ left: `${displayFrac * 100}%`, opacity: scrubbing ? 1 : 0.6 }}
       >
-        <div className="absolute -bottom-1 left-1/2 size-2.5 -translate-x-1/2 rounded-full bg-white" />
+        <div className="absolute -bottom-1 left-1/2 size-2.5 -translate-x-1/2 rounded-full bg-white light:bg-stone-900" />
       </div>
     </div>
   )
@@ -175,7 +180,7 @@ function Marker({ frac, className, label, labelClass }: { frac: number; classNam
   return (
     <div className="pointer-events-none absolute top-0 h-12" style={{ left: `${frac * 100}%` }}>
       <div className={cn('h-9 w-px', className)} />
-      <div className={cn('-translate-x-1/2 font-mono text-[9px] font-semibold tracking-widest', labelClass)}>{label}</div>
+      <div className={cn('-translate-x-1/2 pt-0.5 text-[9px] font-semibold tracking-widest', labelClass)}>{label}</div>
     </div>
   )
 }
@@ -206,13 +211,16 @@ export function Controls({ sequence }: { sequence: StepPlan }) {
     return () => cancelAnimationFrame(frame)
   }, [playing, layout, scrubTo])
 
-  const button = 'flex items-center gap-1.5 rounded border px-2 py-1 font-mono text-[10px] uppercase tracking-wider'
+  const button =
+    'flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider transition-colors duration-100 ease-out'
+  const idle = 'border-border text-secondary hover:border-border-strong hover:bg-elevated hover:text-primary'
+  const active = 'border-accent/50 bg-accent-muted text-accent'
   return (
     <div className="flex gap-1.5">
       <button
         type="button"
         onClick={() => setPlaying(!playing)}
-        className={cn(button, playing ? 'border-protected text-protected' : 'border-line text-ink-muted hover:text-ink')}
+        className={cn(button, playing ? active : idle)}
       >
         {playing ? <Pause className="size-3" /> : <Play className="size-3" />} {playing ? 'Pause' : 'Play plan'}
       </button>
@@ -223,7 +231,7 @@ export function Controls({ sequence }: { sequence: StepPlan }) {
           scrubTo(null)
         }}
         aria-pressed={live}
-        className={cn(button, live ? 'border-cooperative text-cooperative' : 'border-line text-ink-muted hover:text-ink')}
+        className={cn(button, live ? active : idle)}
       >
         <Radio className="size-3" /> Live
       </button>
@@ -231,7 +239,7 @@ export function Controls({ sequence }: { sequence: StepPlan }) {
         type="button"
         onClick={toggleFollow}
         aria-pressed={followSelected}
-        className={cn(button, followSelected ? 'border-protected text-protected' : 'border-line text-ink-muted hover:text-ink')}
+        className={cn(button, followSelected ? active : idle)}
       >
         <Crosshair className="size-3" /> Follow
       </button>
@@ -247,7 +255,7 @@ export function ManeuverTimeline() {
   if (!event) {
     return (
       <Shell>
-        <p className="py-6 text-center font-mono text-[11px] uppercase tracking-widest text-ink-faint">
+        <p className="py-6 text-center text-[12px] text-tertiary">
           Select a threat window or conjunction window to see its manoeuvre sequence
         </p>
       </Shell>
@@ -257,7 +265,7 @@ export function ManeuverTimeline() {
     const primary = rsoById.get(event.primaryId)
     return (
       <Shell>
-        <p className="py-6 text-center font-mono text-[11px] uppercase tracking-widest text-ink-faint">
+        <p className="py-6 text-center text-[12px] text-tertiary">
           {primary?.name} has no propulsion · monitor only
         </p>
       </Shell>
@@ -285,9 +293,9 @@ export function Shell({
   title?: string
 }) {
   return (
-    <section className="shrink-0 border-t border-line bg-panel px-4 py-3" aria-label={`${title} timeline`}>
+    <section className="shrink-0 border-t border-border bg-surface px-4 py-3" aria-label={`${title} timeline`}>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-widest text-ink-muted">{title}</h2>
+        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-secondary">{title}</h2>
         {aside}
       </div>
       {children}
