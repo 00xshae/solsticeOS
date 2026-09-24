@@ -22,7 +22,7 @@ export function ViewTabs() {
           onClick={() => (v === 'lists' ? openList(null) : setView(v))}
           aria-current={view === v ? 'page' : undefined}
           className={cn(
-            'group relative flex items-center gap-1.5 rounded-lg px-2.5 py-2 font-nav text-[13px] font-semibold uppercase tracking-wider transition-colors duration-100',
+            'group relative flex items-center gap-1.5 rounded-lg px-2.5 py-2 font-display text-[13px] font-semibold uppercase tracking-wider transition-colors duration-100',
             view === v ? 'text-accent' : 'text-secondary hover:text-primary',
           )}
         >

@@ -180,7 +180,7 @@ function SavedWatchlists() {
     <div className="mx-auto w-full max-w-6xl space-y-4 p-6">
       <div>
         <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-tertiary">Watchlist & protect-list management</div>
-        <h1 className="mt-1 text-xl font-semibold text-primary">Saved Watchlists</h1>
+        <h1 className="mt-1 font-display text-xl font-semibold text-primary">Saved Watchlists</h1>
         <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-secondary">
           Orbital Rakshak calculates a threat window only once an object sits in an <b className="text-owned">owned</b> or{' '}
           <b className="text-allied">allied</b> list and another sits in an <b className="text-opposed">opposed</b> list. The
@@ -190,7 +190,7 @@ function SavedWatchlists() {
 
       <section className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h2 className="text-[12px] font-semibold uppercase tracking-widest text-accent">RSO lists</h2>
+          <h2 className="font-display text-[12px] font-semibold uppercase tracking-widest text-accent">RSO lists</h2>
           <Button variant="primary" onClick={() => setCreating(true)} disabled={creating}>
             <Plus className="size-3.5" /> New list
           </Button>

@@ -159,7 +159,7 @@ export function RsoListDetail({ list }: { list: RSOList }) {
 
       <section className="rounded-xl border border-border bg-surface">
         <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
-          <h1 className="text-[15px] font-semibold uppercase tracking-[0.12em] text-primary">{list.name}</h1>
+          <h1 className="font-display text-[15px] font-semibold uppercase tracking-[0.12em] text-primary">{list.name}</h1>
           <CategoryChip category={list.category} />
           <span className="font-mono text-[11px] text-tertiary">
             {list.scope} · {members.length} {members.length === 1 ? 'member' : 'members'}
