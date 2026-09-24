@@ -496,6 +496,161 @@
         "meanAnomalyDeg": 209.1
       },
       "envelope": null
+    },
+    {
+      "id": "RISAT-2B",
+      "name": "RISAT-2B",
+      "noradId": 44233,
+      "cosparId": "2019-028A",
+      "segment": "IND",
+      "country": "IND",
+      "operator": "ISRO",
+      "rcs": "MEDIUM",
+      "launchDate": "2019-05-22T00:00:00Z",
+      "launchSite": "SDSC-SHAR",
+      "opsStatus": "OPERATIONAL",
+      "tleAgeHours": 5,
+      "elements": {
+        "epoch": "2026-10-01T06:00:00Z",
+        "smaKm": 6935.4,
+        "ecc": 0.0008,
+        "incDeg": 37,
+        "raanDeg": 212.6,
+        "argpDeg": 90,
+        "meanAnomalyDeg": 318.4
+      },
+      "envelope": {
+        "deltaVBudgetMps": 60,
+        "deltaVRemainingMps": 31,
+        "thrustN": 11,
+        "ispS": 220,
+        "massKg": 615,
+        "propulsion": "MONOPROP"
+      }
+    },
+    {
+      "id": "SDX02",
+      "name": "SPADEX TARGET (SDX02)",
+      "noradId": 62788,
+      "cosparId": "2024-251B",
+      "segment": "IND",
+      "country": "IND",
+      "operator": "ISRO",
+      "rcs": "SMALL",
+      "launchDate": "2024-12-30T16:30:00Z",
+      "launchSite": "SDSC-SHAR",
+      "opsStatus": "OPERATIONAL",
+      "tleAgeHours": 3,
+      "elements": {
+        "epoch": "2026-10-01T06:00:00Z",
+        "smaKm": 6853.1,
+        "ecc": 0.0008,
+        "incDeg": 55,
+        "raanDeg": 48.2,
+        "argpDeg": 90,
+        "meanAnomalyDeg": 204.7
+      },
+      "envelope": {
+        "deltaVBudgetMps": 40,
+        "deltaVRemainingMps": 22,
+        "thrustN": 4,
+        "ispS": 210,
+        "massKg": 220,
+        "propulsion": "MONOPROP"
+      }
+    },
+    {
+      "id": "INSP-1",
+      "name": "INSPECTOR-1 (CARTOSAT-3 SHADOW)",
+      "noradId": 90011,
+      "cosparId": "SIM-2026-001",
+      "segment": "PAY",
+      "country": "UNK",
+      "operator": null,
+      "rcs": "SMALL",
+      "launchDate": null,
+      "launchSite": null,
+      "opsStatus": "UNKNOWN",
+      "tleAgeHours": 11,
+      "envelope": {
+        "deltaVBudgetMps": 320,
+        "deltaVRemainingMps": 245,
+        "thrustN": 10,
+        "ispS": 220,
+        "massKg": 450,
+        "propulsion": "MONOPROP"
+      },
+      "elements": {
+        "epoch": "2026-10-01T06:00:00Z",
+        "smaKm": 6881.1,
+        "ecc": 0.001,
+        "incDeg": 97.46,
+        "raanDeg": 162.45548,
+        "argpDeg": 104.15172,
+        "meanAnomalyDeg": 345.94437
+      }
+    },
+    {
+      "id": "INSP-2",
+      "name": "INSPECTOR-2 (RISAT-2B SHADOW)",
+      "noradId": 90012,
+      "cosparId": "SIM-2026-002",
+      "segment": "PAY",
+      "country": "UNK",
+      "operator": null,
+      "rcs": "SMALL",
+      "launchDate": null,
+      "launchSite": null,
+      "opsStatus": "UNKNOWN",
+      "tleAgeHours": 11,
+      "envelope": {
+        "deltaVBudgetMps": 320,
+        "deltaVRemainingMps": 245,
+        "thrustN": 10,
+        "ispS": 220,
+        "massKg": 450,
+        "propulsion": "MONOPROP"
+      },
+      "elements": {
+        "epoch": "2026-10-01T06:00:00Z",
+        "smaKm": 6932.4,
+        "ecc": 0.0008,
+        "incDeg": 37,
+        "raanDeg": 212.66368,
+        "argpDeg": 89.91272,
+        "meanAnomalyDeg": 293.48728
+      }
+    },
+    {
+      "id": "SDX01",
+      "name": "SPADEX CHASER (SDX01)",
+      "noradId": 62787,
+      "cosparId": "2024-251A",
+      "segment": "IND",
+      "country": "IND",
+      "operator": "ISRO",
+      "rcs": "SMALL",
+      "launchDate": "2024-12-30T16:30:00Z",
+      "launchSite": "SDSC-SHAR",
+      "opsStatus": "OPERATIONAL",
+      "tleAgeHours": 3,
+      "envelope": {
+        "deltaVBudgetMps": 40,
+        "deltaVRemainingMps": 24,
+        "thrustN": 4,
+        "ispS": 210,
+        "massKg": 220,
+        "propulsion": "MONOPROP"
+      },
+      "elements": {
+        "epoch": "2026-10-01T06:00:00Z",
+        "smaKm": 6851.1,
+        "ecc": 0.0008,
+        "incDeg": 55,
+        "raanDeg": 48.24514,
+        "argpDeg": 89.97463,
+        "meanAnomalyDeg": 180.72537
+      }
     }
   ],
   "lists": [
@@ -510,7 +665,9 @@
         "PIXXEL-TD2",
         "DGT-SCOT",
         "EOS-06",
-        "CARTOSAT-3"
+        "CARTOSAT-3",
+        "RISAT-2B",
+        "SDX02"
       ]
     },
     {
@@ -538,7 +695,8 @@
         "FY1C-DEB",
         "C1408-DEB-A",
         "C1408-DEB-B",
-        "IRIDIUM33-DEB"
+        "IRIDIUM33-DEB",
+        "INSP-1"
       ]
     },
     {
@@ -548,6 +706,24 @@
       "scope": "USER",
       "memberIds": [
         "SL16-RB"
+      ]
+    },
+    {
+      "id": "LST-SPADEX-BLUE",
+      "name": "SPADEX TARGET — BLUE (OWNED)",
+      "category": "owned",
+      "scope": "ORG",
+      "memberIds": [
+        "SDX02"
+      ]
+    },
+    {
+      "id": "LST-SPADEX-RED",
+      "name": "SPADEX CHASER — RED (OPPOSED, DEMO)",
+      "category": "opposed",
+      "scope": "ORG",
+      "memberIds": [
+        "SDX01"
       ]
     }
   ]
