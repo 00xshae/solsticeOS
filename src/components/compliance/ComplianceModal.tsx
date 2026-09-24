@@ -37,13 +37,13 @@ function Checks({ report }: { report: ComplianceReport }) {
       {report.checks.map((c) => (
         <li key={c.id} className="flex gap-2">
           {c.passed ? (
-            <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-sev-green" />
+            <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-sev-green-ink" />
           ) : (
-            <XCircle className="mt-0.5 size-3.5 shrink-0 text-sev-red" />
+            <XCircle className="mt-0.5 size-3.5 shrink-0 text-sev-red-ink" />
           )}
           <div>
-            <div className="text-[12px] text-ink">{c.label}</div>
-            <div className="font-mono text-[10px] text-ink-faint">{c.detail}</div>
+            <div className="text-[12px] text-primary">{c.label}</div>
+            <div className="text-[11px] text-tertiary">{c.detail}</div>
           </div>
         </li>
       ))}
@@ -92,20 +92,20 @@ export function ComplianceModal() {
         </>
       }
     >
-      <div className="flex items-center gap-2 border-b border-sev-yellow/30 bg-sev-yellow/10 px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-sev-yellow">
+      <div className="flex items-center gap-2 border-b border-sev-yellow/20 bg-sev-yellow/[0.08] px-4 py-2 text-[10px] font-medium uppercase tracking-widest text-sev-yellow-ink">
         <ShieldAlert className="size-3.5" /> Demo output · not an official IN-SPACe document or authorization
       </div>
       <div className="grid grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <div className="space-y-4 border-r border-line p-4">
+        <div className="space-y-5 border-r border-border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="font-mono text-[9px] uppercase tracking-widest text-ink-faint">Filing</div>
-              <div className="font-mono text-sm text-ink">{report.id}</div>
+              <div className="text-[9px] font-medium uppercase tracking-widest text-tertiary">Filing</div>
+              <div className="font-mono text-sm font-medium text-primary">{report.id}</div>
             </div>
             <span
               className={cn(
-                'rounded px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-widest',
-                report.status === 'READY' ? 'bg-sev-green/15 text-sev-green' : 'bg-sev-orange/15 text-sev-orange',
+                'rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-widest',
+                report.status === 'READY' ? 'bg-sev-green/10 text-sev-green-ink' : 'bg-sev-orange/10 text-sev-orange-ink',
               )}
             >
               {report.status}
@@ -120,7 +120,7 @@ export function ComplianceModal() {
             <Field label="Committed" value={`${formatUtc(Date.parse(report.generatedAt), false)} UTC`} />
           </div>
           <div>
-            <div className="mb-2 font-mono text-[9px] uppercase tracking-widest text-ink-faint">Pre-submission checks</div>
+            <div className="mb-2 text-[9px] font-medium uppercase tracking-widest text-tertiary">Pre-submission checks</div>
             <Checks report={report} />
           </div>
         </div>
@@ -136,19 +136,21 @@ export function ComplianceModal() {
                 title={f.hint}
                 onClick={() => setFormat(f.id)}
                 className={cn(
-                  'rounded px-2 py-1 font-mono text-[10px] uppercase tracking-wider',
-                  format === f.id ? 'bg-protected/15 text-protected' : 'text-ink-muted hover:text-ink',
+                  'rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors duration-100 ease-out',
+                  format === f.id ? 'bg-accent-muted text-accent' : 'text-secondary hover:bg-elevated hover:text-primary',
                 )}
               >
                 CCSDS {f.label}
               </button>
             ))}
-            <span className="ml-auto font-mono text-[10px] text-ink-faint">{lines.length.toLocaleString()} lines</span>
+            <span className="ml-auto text-[10px] text-tertiary">
+              <span className="font-mono tabular-nums">{lines.length.toLocaleString()}</span> lines
+            </span>
           </div>
-          <pre className="max-h-[52vh] min-h-0 flex-1 overflow-auto rounded border border-line bg-void p-3 font-mono text-[10.5px] leading-relaxed text-ink-muted">
+          <pre className="max-h-[52vh] min-h-0 flex-1 overflow-auto rounded-lg border border-border bg-base p-3 font-mono text-[10.5px] leading-relaxed text-secondary">
             {lines.slice(0, PREVIEW_LINES).join('\n')}
             {lines.length > PREVIEW_LINES && (
-              <span className="text-ink-faint">{`\n… ${(lines.length - PREVIEW_LINES).toLocaleString()} more lines in the download`}</span>
+              <span className="text-tertiary">{`\n… ${(lines.length - PREVIEW_LINES).toLocaleString()} more lines in the download`}</span>
             )}
           </pre>
         </div>
