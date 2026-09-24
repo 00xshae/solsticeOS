@@ -1,0 +1,107 @@
+{
+  "note": "Illustrative screening results relative to demoEpoch 2026-10-01T06:00:00Z. Only protected x uncooperative pairs are screened.",
+  "events": [
+    {
+      "id": "CJ-001",
+      "primaryId": "RSAT-2A",
+      "secondaryId": "SL16-RB",
+      "tca": "2026-10-02T11:42:18Z",
+      "windowStart": "2026-09-29T06:00:00Z",
+      "windowEnd": "2026-10-02T12:42:18Z",
+      "missDistanceM": 142,
+      "missVector": { "radialM": 38, "inTrackM": -121, "crossTrackM": 64 },
+      "pc": 3.1e-4,
+      "relativeVelocityKmS": 9.4,
+      "covariance": { "radialM": 45, "inTrackM": 310, "crossTrackM": 58 },
+      "screeningRadiusKm": 5,
+      "assessments": [
+        { "assessedAt": "2026-09-29T06:00:00Z", "missDistanceM": 890, "pc": 2.1e-5, "tca": "2026-10-02T11:42:31Z" },
+        { "assessedAt": "2026-09-30T06:00:00Z", "missDistanceM": 410, "pc": 9.6e-5, "tca": "2026-10-02T11:42:22Z" },
+        { "assessedAt": "2026-10-01T00:00:00Z", "missDistanceM": 186, "pc": 2.4e-4, "tca": "2026-10-02T11:42:19Z" },
+        { "assessedAt": "2026-10-01T06:00:00Z", "missDistanceM": 142, "pc": 3.1e-4, "tca": "2026-10-02T11:42:18Z" }
+      ],
+      "sequenceIds": ["SEQ-001-A", "SEQ-001-B", "SEQ-001-C"],
+      "reasoning": "Derelict Zenit-2 second stage (~9 t, 11 m). Non-manoeuvrable, so the protected asset must execute any avoidance. Miss distance has tightened across four successive screenings."
+    },
+    {
+      "id": "CJ-002",
+      "primaryId": "PIXXEL-FF02",
+      "secondaryId": "C1408-DEB-A",
+      "tca": "2026-10-03T02:15:40Z",
+      "windowStart": "2026-09-30T06:00:00Z",
+      "windowEnd": "2026-10-03T03:15:40Z",
+      "missDistanceM": 608,
+      "missVector": { "radialM": -85, "inTrackM": 590, "crossTrackM": 120 },
+      "pc": 4.2e-5,
+      "relativeVelocityKmS": 10.2,
+      "covariance": { "radialM": 60, "inTrackM": 420, "crossTrackM": 70 },
+      "screeningRadiusKm": 5,
+      "assessments": [
+        { "assessedAt": "2026-09-30T06:00:00Z", "missDistanceM": 1350, "pc": 8.8e-6, "tca": "2026-10-03T02:15:52Z" },
+        { "assessedAt": "2026-10-01T06:00:00Z", "missDistanceM": 608, "pc": 4.2e-5, "tca": "2026-10-03T02:15:40Z" }
+      ],
+      "sequenceIds": ["SEQ-002-A", "SEQ-002-B"],
+      "reasoning": "Fragment from the 2021 Cosmos 1408 ASAT test. Small RCS inflates in-track uncertainty; a fresh tasking of the radar network would tighten the covariance before committing to a burn."
+    },
+    {
+      "id": "CJ-003",
+      "primaryId": "CARTOSAT-3",
+      "secondaryId": "OBJ-2026-118C",
+      "tca": "2026-10-04T19:03:05Z",
+      "windowStart": "2026-09-30T18:00:00Z",
+      "windowEnd": "2026-10-04T20:03:05Z",
+      "missDistanceM": 1238,
+      "missVector": { "radialM": 210, "inTrackM": -1180, "crossTrackM": 310 },
+      "pc": 6.5e-6,
+      "relativeVelocityKmS": 0.42,
+      "covariance": { "radialM": 120, "inTrackM": 950, "crossTrackM": 140 },
+      "screeningRadiusKm": 5,
+      "assessments": [
+        { "assessedAt": "2026-09-30T18:00:00Z", "missDistanceM": 4800, "pc": 1.2e-7, "tca": "2026-10-04T19:04:40Z" },
+        { "assessedAt": "2026-10-01T00:00:00Z", "missDistanceM": 2610, "pc": 1.9e-6, "tca": "2026-10-04T19:03:51Z" },
+        { "assessedAt": "2026-10-01T06:00:00Z", "missDistanceM": 1238, "pc": 6.5e-6, "tca": "2026-10-04T19:03:05Z" }
+      ],
+      "sequenceIds": ["SEQ-003-A", "SEQ-003-B"],
+      "reasoning": "Unregistered payload deployed 2026-09-12 with three unexplained along-track shifts since. Near co-planar geometry keeps relative velocity low, so the pair stays in proximity for roughly 40 minutes around TCA."
+    },
+    {
+      "id": "CJ-004",
+      "primaryId": "PIXXEL-TD2",
+      "secondaryId": "C1408-DEB-B",
+      "tca": "2026-10-03T18:27:51Z",
+      "windowStart": "2026-10-01T00:00:00Z",
+      "windowEnd": "2026-10-03T19:27:51Z",
+      "missDistanceM": 3900,
+      "missVector": { "radialM": 420, "inTrackM": 3840, "crossTrackM": -510 },
+      "pc": 1.1e-7,
+      "relativeVelocityKmS": 10.6,
+      "covariance": { "radialM": 70, "inTrackM": 520, "crossTrackM": 85 },
+      "screeningRadiusKm": 5,
+      "assessments": [
+        { "assessedAt": "2026-10-01T00:00:00Z", "missDistanceM": 3120, "pc": 2.3e-7, "tca": "2026-10-03T18:27:58Z" },
+        { "assessedAt": "2026-10-01T06:00:00Z", "missDistanceM": 3900, "pc": 1.1e-7, "tca": "2026-10-03T18:27:51Z" }
+      ],
+      "sequenceIds": [],
+      "reasoning": "Primary has no propulsion. Monitor only; operator notified for awareness."
+    },
+    {
+      "id": "CJ-005",
+      "primaryId": "EOS-06",
+      "secondaryId": "CZ4C-RB",
+      "tca": "2026-10-06T09:48:12Z",
+      "windowStart": "2026-10-01T06:00:00Z",
+      "windowEnd": "2026-10-06T10:48:12Z",
+      "missDistanceM": 2100,
+      "missVector": { "radialM": -310, "inTrackM": 2050, "crossTrackM": 330 },
+      "pc": 8.0e-7,
+      "relativeVelocityKmS": 1.9,
+      "covariance": { "radialM": 150, "inTrackM": 1400, "crossTrackM": 180 },
+      "screeningRadiusKm": 5,
+      "assessments": [
+        { "assessedAt": "2026-10-01T06:00:00Z", "missDistanceM": 2100, "pc": 8.0e-7, "tca": "2026-10-06T09:48:12Z" }
+      ],
+      "sequenceIds": [],
+      "reasoning": null
+    }
+  ]
+}
