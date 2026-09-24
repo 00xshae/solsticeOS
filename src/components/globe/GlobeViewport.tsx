@@ -84,7 +84,7 @@ function satMeshFactory() {
 function labelElement(object: RSOObject) {
   const el = document.createElement('div')
   el.className =
-    'pointer-events-none -translate-y-5 whitespace-nowrap rounded-sm bg-void/70 px-1.5 py-px font-mono text-[10px] tracking-wider text-white'
+    'pointer-events-none -translate-y-5 animate-fade-in whitespace-nowrap rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm'
   el.textContent = object.name
   return el
 }
@@ -124,7 +124,7 @@ export function GlobeViewport() {
     let plan: { key: string; paths: OverlayPath[]; markers: OverlayMarker[] } | null = null
 
     const globe = new Globe(container, { animateIn: false })
-      .backgroundColor('#0b0f17')
+      .backgroundColor('#000000')
       .backgroundImageUrl('/textures/night-sky.png')
       .globeImageUrl('/textures/earth-blue-marble.jpg')
       .bumpImageUrl('/textures/earth-topology.png')
@@ -138,7 +138,7 @@ export function GlobeViewport() {
       .objectThreeObject(() => satMesh())
       .objectLabel((d) => {
         const { object } = d as SatDatum
-        return `<div class="font-mono text-[11px]">${object.name}<br/><span style="opacity:.6">NORAD ${object.noradId}</span></div>`
+        return `<div class="text-[11px] font-medium">${object.name}<br/><span class="font-mono font-normal" style="opacity:.6">NORAD ${object.noradId}</span></div>`
       })
       .onObjectClick((d) => {
         const { selectedRsoId, selectRso } = useMissionStore.getState()
@@ -279,13 +279,13 @@ export function GlobeViewport() {
   }, [selectedRsoId])
 
   return (
-    <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-void" aria-label="3D operating picture">
+    <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-black" aria-label="3D operating picture">
       <div ref={containerRef} className="absolute inset-0" />
       <GlobeLegend />
       <button
         type="button"
         onClick={() => globeRef.current?.pointOfView(HOME_VIEW, 1000)}
-        className="absolute right-3 top-3 flex items-center gap-1.5 rounded border border-line bg-panel/80 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-ink-muted backdrop-blur hover:text-ink"
+        className="absolute right-3 top-3 flex items-center gap-1.5 rounded-lg border border-glass-border bg-glass px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-secondary backdrop-blur-md transition-colors duration-100 ease-out hover:text-primary light:shadow-lg"
       >
         <LocateFixed className="size-3.5" /> Reset view
       </button>
@@ -295,15 +295,15 @@ export function GlobeViewport() {
 
 function GlobeLegend() {
   return (
-    <div className="pointer-events-none absolute bottom-3 left-3 rounded border border-line bg-panel/80 px-3 py-2 backdrop-blur">
-      <div className="mb-1 font-mono text-[9px] uppercase tracking-widest text-ink-faint">Earth-fixed · Kepler + J2</div>
-      <div className="flex gap-3 font-mono text-[10px] uppercase tracking-wider">
-        <span className="flex items-center gap-1.5 text-white">
-          <span className="size-2 rounded-full bg-current shadow-[0_0_6px_2px_rgba(255,255,255,0.6)]" />
+    <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-glass-border bg-glass px-3 py-2 backdrop-blur-xl light:shadow-lg">
+      <div className="mb-1.5 text-[10px] text-tertiary">Earth-fixed · Kepler + J₂</div>
+      <div className="flex gap-3 text-[10px] font-medium text-primary">
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-white shadow-[0_0_6px_2px_rgba(255,255,255,0.6)] light:shadow-none light:ring-1 light:ring-stone-400" />
           Tracked RSO
         </span>
-        <span className="flex items-center gap-1.5 text-[#67e8f9]">
-          <span className="h-0.5 w-3 bg-current" />
+        <span className="flex items-center gap-1.5">
+          <span className="h-0.5 w-3 rounded-full bg-[#67e8f9] light:bg-cyan-600" />
           COLA arc
         </span>
       </div>
