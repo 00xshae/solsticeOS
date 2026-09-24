@@ -76,6 +76,41 @@ describe('catalog', () => {
   })
 })
 
+describe('threat log', () => {
+  it('starts with history: first ratings two days back, climbing towards the demo epoch', () => {
+    const log = state().threatLog
+    const cartosat = log.filter((e) => e.objectId === 'CARTOSAT-3').reverse()
+    expect(cartosat[0]).toMatchObject({ reason: 'MEMBER_ADDED', previous: null })
+    expect(Date.parse(cartosat[0]!.recordedAt)).toBe(DEMO_EPOCH_MS - 48 * 3_600_000)
+    for (let i = 1; i < cartosat.length; i++) expect(cartosat[i]!.previous).toBe(cartosat[i - 1]!.rating)
+    expect(cartosat.at(-1)!.rating!).toBeGreaterThan(cartosat[0]!.rating!)
+    // Newest first.
+    const times = log.map((e) => Date.parse(e.recordedAt))
+    expect(times).toEqual([...times].sort((a, b) => b - a))
+  })
+
+  it('reassesses on each new mission-clock hour', () => {
+    const before = state().threatLog.length
+    state().setSpeed(60)
+    state().tick(30 * 60_000) // 30 h of mission time in one tick
+    expect(state().lastAssessedHour).toBe(Math.floor(state().simTimeMs / 3_600_000))
+    expect(state().threatLog.length).toBeGreaterThan(before)
+    expect(state().threatLog[0]!.reason).toBe('REASSESSED')
+  })
+
+  it('logs the RISAT-2B window appearing when INSPECTOR-2 joins an opposed list, and going on removal', () => {
+    const id = state().createList({ name: 'Opposed inspector 2', category: 'opposed', scope: 'USER' })
+    state().addListMember(id, 'INSP-2')
+    const added = state().threatLog.slice(0, 2)
+    expect(added.map((e) => e.objectId).sort()).toEqual(['INSP-2', 'RISAT-2B'])
+    expect(added.every((e) => e.reason === 'MEMBER_ADDED' && e.previous === null && e.rating !== null)).toBe(true)
+
+    state().deleteList(id)
+    const removed = state().threatLog.slice(0, 2)
+    expect(removed.every((e) => e.reason === 'MEMBER_REMOVED' && e.rating === null)).toBe(true)
+  })
+})
+
 describe('rso lists', () => {
   it('creates an empty, upper-cased list and opens it on the lists page', () => {
     const id = state().createList({ name: 'Opposed inspector 2', category: 'opposed', scope: 'USER' })
