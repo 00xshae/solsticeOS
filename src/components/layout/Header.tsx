@@ -4,7 +4,7 @@ import { formatUtc } from '@/lib/format'
 import { useMissionStore, type SpeedMultiplier } from '@/store/missionStore'
 import { ViewTabs } from './ViewTabs'
 
-const SPEEDS: SpeedMultiplier[] = [1, 10, 60]
+const SPEEDS: SpeedMultiplier[] = [10, 100, 1000]
 
 const iconButton =
   'grid size-8 place-items-center rounded-lg border border-border text-secondary transition-colors duration-100 ease-out hover:border-border-strong hover:bg-elevated hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus'
