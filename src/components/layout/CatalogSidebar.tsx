@@ -1,14 +1,12 @@
-import { useMemo } from 'react'
 import { Search, X } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { rsoObjects } from '@/data'
 import { cn } from '@/lib/cn'
 import { SEGMENT_CODE, SEGMENT_LABEL } from '@/lib/format'
 import { CategoryChip, SeverityBadge } from '@/components/ui/Badge'
+import { useAggregateSeverity } from '@/hooks/useSeverity'
 import {
   rsoCategories,
-  selectAggregateSeverity,
-  selectDisplayTimeMs,
   selectFilteredObjects,
   useMissionStore,
   type SegmentFilter,
@@ -28,13 +26,7 @@ const countBySegment = rsoObjects.reduce<Record<string, number>>(
 function useRowSeverity(object: RSOObject) {
   const categories = rsoCategories(object.id)
   const role = categories.includes('protected') ? 'vulnerable' : categories.includes('uncooperative') ? 'endangering' : null
-  // Severity moves slowly; re-evaluate once per displayed minute.
-  const minute = useMissionStore((s) => Math.floor(selectDisplayTimeMs(s) / 60_000))
-  const radius = useMissionStore((s) => s.screeningRadiusOverrideKm)
-  return useMemo(
-    () => (role ? selectAggregateSeverity(useMissionStore.getState(), object.id, role) : null),
-    [object.id, role, minute, radius],
-  )
+  return useAggregateSeverity(object.id, role)
 }
 
 function CatalogRow({ object }: { object: RSOObject }) {
