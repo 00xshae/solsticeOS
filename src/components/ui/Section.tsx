@@ -26,7 +26,7 @@ export function Section({
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="flex items-center gap-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-secondary transition-colors duration-150 hover:text-primary"
+          className="flex items-center gap-1.5 text-left font-display text-[11px] font-semibold uppercase tracking-wide text-secondary transition-colors duration-150 hover:text-primary"
         >
           <ChevronDown className={cn('size-3.5 transition-transform duration-200 ease-in-out', !open && '-rotate-90')} />
           {title}
