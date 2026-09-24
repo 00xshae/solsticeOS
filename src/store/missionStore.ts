@@ -4,11 +4,33 @@
 // Selectors below are plain functions of state. Ones that build new arrays or objects
 // should be wrapped with useShallow or useMemo in components.
 import { create } from 'zustand'
-import { conjunctionById, conjunctions, DEMO_EPOCH_MS, rsoById, rsoLists, rsoObjects, sequenceById } from '@/data'
+import {
+  conjunctionById,
+  conjunctions,
+  DEMO_EPOCH_MS,
+  interceptSequenceById,
+  rsoById,
+  rsoLists,
+  rsoObjects,
+  sequenceById,
+  sequencesOfWindow,
+  threatWindowById,
+} from '@/data'
+import type { StepPlan } from '@/lib/maneuver'
 import { aggregateSeverity, computeSeverity } from '@/lib/severity'
-import { assessThreats, categoriesOf, type LoggedRatings } from '@/lib/threatScreen'
+import { isSequenceOpen, sequenceMetrics } from '@/lib/threat'
+import {
+  assessThreats,
+  categoriesOf,
+  establishedWindows,
+  isWindowEstablished,
+  objectThreat,
+  windowRating,
+  type LoggedRatings,
+} from '@/lib/threatScreen'
 import type {
   ConjunctionEvent,
+  InterceptSequence,
   ListScope,
   ManeuverEnvelope,
   ManeuverSequence,
@@ -18,6 +40,9 @@ import type {
   SeverityBreakdown,
   ThreatLogEntry,
   ThreatLogReason,
+  ThreatRating,
+  ThreatRole,
+  ThreatWindow,
 } from '@/types'
 
 export type SpeedMultiplier = 1 | 10 | 60
@@ -55,6 +80,10 @@ export interface MissionState {
 
   activeConjunctionId: string | null
   activeSequenceId: string | null
+  /** Open threat window; mutually exclusive with the active conjunction. */
+  activeThreatWindowId: string | null
+  /** Intercept sequence the chaser flies on the globe and timeline. */
+  activeInterceptId: string | null
   /** Timeline scrubber position; null follows the mission clock. */
   scrubTimeMs: number | null
 
@@ -91,6 +120,8 @@ export interface MissionActions {
 
   selectConjunction: (id: string | null) => void
   selectSequence: (id: string) => void
+  selectThreatWindow: (id: string | null) => void
+  selectIntercept: (id: string) => void
   scrubTo: (timeMs: number | null) => void
 
   setEnvelopeOverride: (rsoId: string, patch: Partial<ManeuverEnvelope>) => void
@@ -150,6 +181,8 @@ export const initialMissionState: MissionState = {
   selectedRsoId: null,
   activeConjunctionId: null,
   activeSequenceId: null,
+  activeThreatWindowId: null,
+  activeInterceptId: null,
   scrubTimeMs: null,
   envelopeOverrides: {},
   screeningRadiusOverrideKm: null,
@@ -166,10 +199,32 @@ let listCounter = 0
 const updateList = (lists: RSOList[], id: string, patch: (l: RSOList) => Partial<RSOList>) =>
   lists.map((l) => (l.id === id ? { ...l, ...patch(l) } : l))
 
-const sequenceBounds = (sequence: ManeuverSequence): [number, number] => [
-  Date.parse(sequence.steps[0].start),
-  Date.parse(sequence.steps[4].end),
+const planBounds = (plan: StepPlan): [number, number] => [
+  Date.parse(plan.steps[0]!.start),
+  Date.parse(plan.steps.at(-1)!.end),
 ]
+
+/** Soonest-arriving sequence still open at `nowMs`, else the window's first. */
+function defaultIntercept(window: ThreatWindow, nowMs: number): string | null {
+  const sequences = sequencesOfWindow.get(window.id) ?? []
+  const open = sequences.filter((s) => isSequenceOpen(s, nowMs))
+  const soonest = open.sort((a, b) => sequenceMetrics(a).arrivalMs - sequenceMetrics(b).arrivalMs)[0]
+  return (soonest ?? sequences[0])?.id ?? null
+}
+
+const CLOSED_THREAT = { activeThreatWindowId: null, activeInterceptId: null } as const
+const CLOSED_CONJUNCTION = {
+  activeConjunctionId: null,
+  activeSequenceId: null,
+  colaStatus: 'PLANNING' as ColaStatus,
+  committedAtMs: null,
+} as const
+
+/** Closes the active threat window if list edits mean it is no longer screened. */
+const keepThreatIfEstablished = (s: MissionState, lists: RSOList[]) => {
+  const window = selectActiveThreatWindow(s)
+  return window && !isWindowEstablished(lists, window) ? { ...CLOSED_THREAT, scrubTimeMs: null } : {}
+}
 
 export const useMissionStore = create<MissionStore>()((set, get) => ({
   ...initialMissionState,
@@ -209,6 +264,7 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
         lists,
         ...(s.openListId === id && { openListId: null }),
         ...withAssessment(s, lists, s.simTimeMs, 'MEMBER_REMOVED', list.memberIds),
+        ...keepThreatIfEstablished(s, lists),
       }
     }),
   addListMember: (listId, rsoId) =>
@@ -222,7 +278,11 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
     set((s) => {
       if (!s.lists.find((l) => l.id === listId)?.memberIds.includes(rsoId)) return {}
       const lists = updateList(s.lists, listId, (l) => ({ memberIds: l.memberIds.filter((m) => m !== rsoId) }))
-      return { lists, ...withAssessment(s, lists, s.simTimeMs, 'MEMBER_REMOVED', [rsoId]) }
+      return {
+        lists,
+        ...withAssessment(s, lists, s.simTimeMs, 'MEMBER_REMOVED', [rsoId]),
+        ...keepThreatIfEstablished(s, lists),
+      }
     }),
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -230,18 +290,15 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
   untrackRso: (id) =>
     set((s) => {
       const conj = selectActiveConjunction(s)
-      // Dropping either object of the open conjunction closes it: the globe can no longer show the pair.
+      const threat = selectActiveThreatWindow(s)
+      // Dropping either object of the open pair closes it: the globe can no longer show it.
       const closesConjunction = conj !== null && (conj.primaryId === id || conj.secondaryId === id)
+      const closesThreat = threat !== null && (threat.targetId === id || threat.opposedId === id)
       return {
         trackedIds: s.trackedIds.filter((t) => t !== id),
         ...(s.selectedRsoId === id && { selectedRsoId: null }),
-        ...(closesConjunction && {
-          activeConjunctionId: null,
-          activeSequenceId: null,
-          scrubTimeMs: null,
-          colaStatus: 'PLANNING' as const,
-          committedAtMs: null,
-        }),
+        ...(closesConjunction && { ...CLOSED_CONJUNCTION, scrubTimeMs: null }),
+        ...(closesThreat && { ...CLOSED_THREAT, scrubTimeMs: null }),
       }
     }),
   // Selecting an object always puts it on the globe.
@@ -257,6 +314,7 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
       colaStatus: 'PLANNING',
       committedAtMs: null,
       ...(event && {
+        ...CLOSED_THREAT,
         selectedRsoId: event.primaryId,
         // Opening a conjunction puts both objects on the globe.
         trackedIds: withTracked(withTracked(get().trackedIds, event.primaryId), event.secondaryId),
@@ -268,10 +326,30 @@ export const useMissionStore = create<MissionStore>()((set, get) => ({
     if (!sequence || sequence.conjunctionId !== get().activeConjunctionId) return
     set({ activeSequenceId: id, scrubTimeMs: null, colaStatus: 'PLANNING', committedAtMs: null })
   },
+  selectThreatWindow: (id) => {
+    const window = id ? threatWindowById.get(id) : undefined
+    const s = get()
+    set({
+      activeThreatWindowId: window?.id ?? null,
+      activeInterceptId: window ? defaultIntercept(window, selectDisplayTimeMs(s)) : null,
+      scrubTimeMs: null,
+      ...(window && {
+        ...CLOSED_CONJUNCTION,
+        selectedRsoId: window.targetId,
+        // Opening a window puts the target and its chaser on the globe.
+        trackedIds: withTracked(withTracked(s.trackedIds, window.targetId), window.opposedId),
+      }),
+    })
+  },
+  selectIntercept: (id) => {
+    const sequence = interceptSequenceById.get(id)
+    if (!sequence || sequence.windowId !== get().activeThreatWindowId) return
+    set({ activeInterceptId: id, scrubTimeMs: null })
+  },
   scrubTo: (timeMs) => {
-    const sequence = selectActiveSequence(get())
-    if (timeMs === null || !sequence) return set({ scrubTimeMs: null })
-    const [start, end] = sequenceBounds(sequence)
+    const plan = selectActivePlan(get())
+    if (timeMs === null || !plan) return set({ scrubTimeMs: null })
+    const [start, end] = planBounds(plan)
     set({ scrubTimeMs: Math.min(end, Math.max(start, timeMs)) })
   },
 
@@ -310,6 +388,25 @@ export const selectActiveConjunction = (s: MissionState): ConjunctionEvent | nul
 
 export const selectActiveSequence = (s: MissionState): ManeuverSequence | null =>
   (s.activeSequenceId && sequenceById.get(s.activeSequenceId)) || null
+
+export const selectActiveThreatWindow = (s: MissionState): ThreatWindow | null =>
+  (s.activeThreatWindowId && threatWindowById.get(s.activeThreatWindowId)) || null
+
+export const selectActiveIntercept = (s: MissionState): InterceptSequence | null =>
+  (s.activeInterceptId && interceptSequenceById.get(s.activeInterceptId)) || null
+
+/** Whatever the timeline is scrubbing: the COLA plan or the chaser's intercept. */
+export const selectActivePlan = (s: MissionState): ManeuverSequence | InterceptSequence | null =>
+  selectActiveSequence(s) ?? selectActiveIntercept(s)
+
+/** Windows screened by the current lists (any scope). New array: wrap in useShallow/useMemo. */
+export const selectEstablishedWindows = (s: MissionState): ThreatWindow[] => establishedWindows(s.lists)
+
+export const selectWindowRating = (s: MissionState, window: ThreatWindow): ThreatRating | null =>
+  windowRating(window, selectDisplayTimeMs(s))
+
+export const selectObjectThreat = (s: MissionState, objectId: string, role: ThreatRole, scope?: ListScope) =>
+  objectThreat(s.lists, objectId, role, selectDisplayTimeMs(s), scope)
 
 /** Catalog matches for the search box; nothing until the analyst types. */
 export function selectSearchResults(s: MissionState): RSOObject[] {

@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { DEMO_EPOCH_MS, sequenceById } from '@/data'
+import { DEMO_EPOCH_MS, sequenceById, threatWindowById } from '@/data'
 import {
   initialMissionState,
   selectCategories,
   selectOpenList,
+  selectActivePlan,
   selectActiveSequence,
+  selectEstablishedWindows,
+  selectObjectThreat,
+  selectWindowRating,
   selectAggregateSeverity,
   selectConjunctionsBySeverity,
   selectDisplayTimeMs,
@@ -73,6 +77,50 @@ describe('catalog', () => {
   it('reports list categories for an object', () => {
     expect(selectCategories(state(), 'RSAT-2A')).toEqual(['owned'])
     expect(selectCategories(state(), 'SL16-RB')).toEqual(['opposed'])
+  })
+})
+
+describe('threat windows', () => {
+  it('opens a window with its target selected, both objects tracked and the soonest sequence flying', () => {
+    state().selectThreatWindow('TW-CARTOSAT-INSP1')
+    expect(state()).toMatchObject({ selectedRsoId: 'CARTOSAT-3', activeConjunctionId: null })
+    expect(state().trackedIds).toEqual(['CARTOSAT-3', 'INSP-1'])
+    const plan = selectActivePlan(state())!
+    expect(plan.id.startsWith('TW-CARTOSAT-INSP1-')).toBe(true)
+    // Scrubbing is clamped to the intercept plan.
+    state().scrubTo(0)
+    expect(state().scrubTimeMs).toBe(Date.parse(plan.steps[0].start))
+  })
+
+  it('keeps conjunctions and threat windows mutually exclusive', () => {
+    state().selectThreatWindow('TW-SPADEX')
+    state().selectConjunction('CJ-001')
+    expect(state()).toMatchObject({ activeThreatWindowId: null, activeInterceptId: null, activeConjunctionId: 'CJ-001' })
+    state().selectThreatWindow('TW-SPADEX')
+    expect(state()).toMatchObject({ activeConjunctionId: null, activeSequenceId: null, activeThreatWindowId: 'TW-SPADEX' })
+  })
+
+  it('only accepts sequences from the open window', () => {
+    state().selectThreatWindow('TW-SPADEX')
+    const before = state().activeInterceptId
+    state().selectIntercept('TW-CARTOSAT-INSP1-S01')
+    expect(state().activeInterceptId).toBe(before)
+    state().selectIntercept('TW-SPADEX-S05')
+    expect(state().activeInterceptId).toBe('TW-SPADEX-S05')
+  })
+
+  it('lists established windows and closes the open one when its chaser leaves every opposed list', () => {
+    expect(selectEstablishedWindows(state()).map((w) => w.id).sort()).toEqual(['TW-CARTOSAT-INSP1', 'TW-SPADEX'])
+    state().selectThreatWindow('TW-SPADEX')
+    state().removeListMember('LST-SPADEX-RED', 'SDX01')
+    expect(state().activeThreatWindowId).toBeNull()
+    expect(selectEstablishedWindows(state()).map((w) => w.id)).toEqual(['TW-CARTOSAT-INSP1'])
+  })
+
+  it('rates objects as threatened or threatening, by list scope', () => {
+    expect(selectObjectThreat(state(), 'CARTOSAT-3', 'threatened', 'ORG')!.rating).toBeGreaterThan(80)
+    expect(selectObjectThreat(state(), 'CARTOSAT-3', 'threatened', 'USER')).toBeNull()
+    expect(selectWindowRating(state(), threatWindowById.get('TW-SPADEX')!)!.band).toBe('yellow')
   })
 })
 
