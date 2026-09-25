@@ -142,7 +142,10 @@ export function ResponseOptions({ event }: { event: ConjunctionEvent }) {
   if (metrics.length === 0) return null
 
   return (
-    <Section title={`Response options · ${metrics.length} COA`}>
+    <Section
+      title={`Response options · ${metrics.length} COA`}
+      info="Feasible courses of action to counter this conjunction. Orbital Rakshak compares and recommends — the operator selects and commits."
+    >
       <div className="space-y-2 px-3 py-3">
         {metrics.map((m) => (
           <CoaCard key={m.sequenceId} m={m} selected={m.sequenceId === activeSequenceId} recommended={m.sequenceId === recommended} />
