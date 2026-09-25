@@ -27,9 +27,14 @@ const HOME_VIEW = { lat: 18, lng: 79, altitude: 2.6 }
 const OVERLAY_REFRESH_MS = 250
 /** Objects on no list stay neutral white; listed ones take their category colour. */
 const UNLISTED_HEX = '#ffffff'
+/** Colour of the slow, blinking glow once a pair is actually close, not merely selected. */
+const ATTENTION_HEX = '#ff2d2d'
+/** One full dim-to-bright-to-dim cycle, in milliseconds. */
+const ATTENTION_PERIOD_MS = 1600
 
-/** Owned wins over allied over opposed, matching the order categories are listed in. */
-const globeHex = (s: MissionState, id: string) => {
+/** Owned wins over allied over opposed; attention (close pair) wins over category. */
+const globeHex = (s: MissionState, id: string, attention: Set<string>) => {
+  if (attention.has(id)) return ATTENTION_HEX
   const [category] = selectCategories(s, id)
   return category ? CATEGORY_HEX[category] : UNLISTED_HEX
 }
@@ -153,6 +158,9 @@ function satMeshFactory() {
       m.glow.dispose()
     }
   }
+  // Exposed so the render loop can grab the exact materials an "attention" mesh is using and
+  // breathe their brightness/opacity, instead of maintaining a second, parallel colour path.
+  make.materialsFor = materialsFor
   return make
 }
 
@@ -188,14 +196,22 @@ function pairHex(s: MissionState): { id: string; hex: string } | null {
   return threat && rating ? { id: threat.opposedId, hex: SEVERITY_HEX[rating.band] } : null
 }
 
-const ATTENTION_HEX = '#ff2d2d'
-
-/** Both parties of the pair needing attention right now: an open conjunction or threat window. */
-function attentionPairIds(s: MissionState): string[] {
+/**
+ * Both parties of the pair once it's actually close — not the moment it's opened in the UI, but
+ * once its own severity or threat rating has crossed into orange/red. For a conjunction that
+ * tracks real proximity/probability as it evolves; for a threat window it naturally follows once
+ * the chaser is past Burn 1 and closing, since "soon" is one of the rating's own factors.
+ */
+function attentionActive(s: MissionState): string[] {
   const conj = selectActiveConjunction(s)
-  if (conj) return [conj.primaryId, conj.secondaryId]
+  if (conj) {
+    const band = selectSeverity(s, conj).band
+    return band === 'orange' || band === 'red' ? [conj.primaryId, conj.secondaryId] : []
+  }
   const threat = selectActiveThreatWindow(s)
-  return threat ? [threat.targetId, threat.opposedId] : []
+  if (!threat) return []
+  const rating = selectWindowRating(s, threat)
+  return rating && (rating.band === 'orange' || rating.band === 'red') ? [threat.targetId, threat.opposedId] : []
 }
 
 export function GlobeViewport() {
@@ -210,9 +226,9 @@ export function GlobeViewport() {
     // Only tracked objects are drawn; data is cached by id so globe.gl keeps each mesh across
     // frames. A category change (list edit) swaps in a new datum so the mesh is rebuilt.
     const satById = new Map<string, SatDatum>()
-    const trackedSats = (s: MissionState): SatDatum[] =>
+    const trackedSats = (s: MissionState, attention: Set<string>): SatDatum[] =>
       s.trackedIds.flatMap((id) => {
-        const hex = globeHex(s, id)
+        const hex = globeHex(s, id, attention)
         let sat = satById.get(id)
         if (!sat || sat.hex !== hex) {
           const object = rsoById.get(id)
@@ -268,15 +284,6 @@ export function GlobeViewport() {
       .htmlAltitude('alt')
       .htmlElement((d: object) => (d as HtmlDatum).el)
       .htmlTransitionDuration(0)
-      // Blinking red pulse over both objects of an open conjunction or threat window.
-      .ringsData([])
-      .ringLat('lat')
-      .ringLng('lng')
-      .ringAltitude('alt')
-      .ringColor(() => (t: number) => withAlpha(ATTENTION_HEX, 1 - t))
-      .ringMaxRadius(3.5)
-      .ringPropagationSpeed(2.4)
-      .ringRepeatPeriod(900)
       .pointOfView(HOME_VIEW)
     // Headlight: keep the lit hemisphere facing the viewer wherever the camera orbits.
     const headlight = new THREE.DirectionalLight(0xffffff, 0.9 * Math.PI)
@@ -298,9 +305,9 @@ export function GlobeViewport() {
       }
     }
 
-    // Rings take the object's category colour; the active pair's rating colour lives on the
-    // approach arc and markers instead, so an opposed ring always reads red.
-    const ringsFor = (s: MissionState, timeMs: number): OverlayPath[] => {
+    // Rings take the object's category colour (or the blinking attention colour once close);
+    // the active pair's rating colour otherwise lives on the approach arc and markers.
+    const ringsFor = (s: MissionState, timeMs: number, attention: Set<string>): OverlayPath[] => {
       return s.trackedIds.flatMap((id) => {
         const object = rsoById.get(id)
         if (!object) return []
@@ -308,7 +315,7 @@ export function GlobeViewport() {
           {
             id,
             points: orbitRing(effectiveElements(s, object, timeMs), timeMs),
-            color: withAlpha(globeHex(s, id), id === s.selectedRsoId ? 0.95 : 0.7),
+            color: withAlpha(globeHex(s, id, attention), id === s.selectedRsoId ? 0.95 : 0.7),
             stroke: id === s.selectedRsoId ? 0.9 : 0.6,
             dash: 1,
             gap: 0,
@@ -341,8 +348,9 @@ export function GlobeViewport() {
       headlight.position.copy(globe.camera().position)
       const s = useMissionStore.getState()
       const timeMs = selectDisplayTimeMs(s)
+      const attention = new Set(attentionActive(s))
 
-      const sats = trackedSats(s)
+      const sats = trackedSats(s, attention)
       for (const sat of sats) {
         const geo = geoAt(effectiveElements(s, sat.object, timeMs), timeMs)
         sat.lat = geo.lat
@@ -351,20 +359,21 @@ export function GlobeViewport() {
       }
       globe.objectsData(sats)
 
-      // Pulse a red ring over each object of an open conjunction or threat window, every frame
-      // so it tracks the satellites as they move.
-      globe.ringsData(
-        attentionPairIds(s).flatMap((id) => {
-          const sat = satById.get(id)
-          return sat ? [{ id, lat: sat.lat, lng: sat.lng, alt: sat.alt }] : []
-        }),
-      )
+      // A slow, simple dim-bright-dim breathing on the shared "attention" materials — not an
+      // expanding ring, just the object's own glow pulsing once the pair is actually close.
+      if (attention.size > 0) {
+        const phase = (now % ATTENTION_PERIOD_MS) / ATTENTION_PERIOD_MS
+        const pulse = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(phase * Math.PI * 2))
+        const mats = satMesh.materialsFor(ATTENTION_HEX)
+        mats.core.color.set(ATTENTION_HEX).multiplyScalar(pulse)
+        mats.glow.opacity = pulse
+      }
 
       if (now - lastOverlayAt > OVERLAY_REFRESH_MS) {
         lastOverlayAt = now
         syncLabels(s.trackedIds)
         syncPlan(s)
-        rings = ringsFor(s, timeMs)
+        rings = ringsFor(s, timeMs, attention)
         globe.pathsData([...rings, ...(plan?.paths ?? [])])
       }
       for (const label of labels.values()) {
