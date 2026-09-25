@@ -83,7 +83,10 @@ function SequenceList({ window }: { window: ThreatWindow }) {
   const openCount = sequences.filter((s) => isSequenceOpen(s, minute * 60_000)).length
 
   return (
-    <Section title={`Manoeuvre sequences · ${sequences.length}`}>
+    <Section
+      title={`Manoeuvre sequences · ${sequences.length}`}
+      info="Feasible burn-coast-burn intercepts for this window, sortable by cheapest delta-v, quickest transit or soonest arrival."
+    >
       <div className="flex items-center gap-1 px-3 py-1.5" role="group" aria-label="Sort sequences">
         <ArrowDownUp className="mr-1 size-3 text-tertiary" />
         {SORTS.map((s) => (
@@ -124,7 +127,7 @@ export function ThreatWindowCard({ window }: { window: ThreatWindow }) {
   const end = Date.parse(window.end)
 
   return (
-    <div className="border-b border-border" style={{ boxShadow: `inset 3px 0 0 ${color}` }}>
+    <div className="border-b border-border">
       <div className="flex items-center gap-3 px-3 py-3" style={{ backgroundColor: rating ? `${color}14` : undefined }}>
         <button
           type="button"
