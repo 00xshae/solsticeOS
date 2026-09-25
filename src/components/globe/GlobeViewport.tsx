@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { Globe2, LocateFixed, Map as MapIcon, Orbit } from 'lucide-react'
 import { rsoById } from '@/data'
 import { cn } from '@/lib/cn'
-import { SEVERITY_HEX } from '@/lib/format'
+import { CATEGORY_HEX, CATEGORY_LABEL, SEVERITY_HEX } from '@/lib/format'
 import { maneuveredElementsAt } from '@/lib/maneuver'
 import { EARTH_RADIUS_KM, geoAt, orbitRing, type GeoPoint } from '@/lib/orbit'
 import {
@@ -12,20 +12,44 @@ import {
   selectActiveIntercept,
   selectActiveSequence,
   selectActiveThreatWindow,
+  selectCategories,
   selectDisplayTimeMs,
   selectSeverity,
   selectWindowRating,
   useMissionStore,
   type MissionState,
+  type SpeedMultiplier,
 } from '@/store/missionStore'
-import type { OrbitalElements, RSOObject } from '@/types'
+import type { OrbitalElements, RSOObject, RsoListCategory } from '@/types'
 import { buildInterceptOverlay, buildPlanOverlay, type OverlayMarker, type OverlayPath } from './planOverlay'
 
 const HOME_VIEW = { lat: 18, lng: 79, altitude: 2.6 }
 const OVERLAY_REFRESH_MS = 250
-const SAT_HEX = '#ffffff'
-const RING_COLOR = 'rgba(255, 255, 255, 0.7)'
-const SELECTED_RING_COLOR = 'rgba(255, 255, 255, 0.95)'
+/** Objects on no list stay neutral white; listed ones take their category colour. */
+const UNLISTED_HEX = '#ffffff'
+/** Colour of the slow, blinking glow once a pair is actually close, not merely selected. */
+const ATTENTION_HEX = '#ff2d2d'
+/** One full dim-to-bright-to-dim cycle, in milliseconds. */
+const ATTENTION_PERIOD_MS = 1600
+
+/** Pinned for the threat-window demo pair, regardless of list membership. */
+const NAMED_HEX: Record<string, string> = {
+  'CARTOSAT-3': CATEGORY_HEX.owned,
+  'INSP-1': CATEGORY_HEX.opposed,
+}
+
+/** Owned wins over allied over opposed. The dot itself never changes colour for attention —
+ *  only its glow does, see the render loop below. */
+const globeHex = (s: MissionState, id: string) => {
+  if (NAMED_HEX[id]) return NAMED_HEX[id]
+  const [category] = selectCategories(s, id)
+  return category ? CATEGORY_HEX[category] : UNLISTED_HEX
+}
+
+const withAlpha = (hex: string, alpha: number) => {
+  const n = Number.parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+}
 
 export type GlobeSurface = 'physical' | 'wireframe' | 'political'
 
@@ -71,6 +95,10 @@ function countryColor(feature: object) {
 interface SatDatum {
   id: string
   object: RSOObject
+  /** Category colour the mesh was built with; a new datum replaces this one when it changes. */
+  hex: string
+  /** Stashed on first objectThreeObject call so the render loop can reach its glow sprite. */
+  mesh?: THREE.Group
   lat: number
   lng: number
   alt: number
@@ -97,38 +125,60 @@ function glowTexture() {
   return new THREE.CanvasTexture(canvas)
 }
 
-/** White core plus an additive glow sprite; geometry and materials are shared across objects. */
+/**
+ * Coloured core plus an additive glow sprite. Geometry and the glow texture are shared; the
+ * materials are cached per colour, so objects in the same category share them too.
+ */
 function satMeshFactory() {
   const core = new THREE.SphereGeometry(0.9, 12, 8)
-  const coreMaterial = new THREE.MeshBasicMaterial({ color: SAT_HEX })
-  const glowMaterial = new THREE.SpriteMaterial({
-    map: glowTexture(),
-    color: SAT_HEX,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  })
-  const make = () => {
+  const texture = glowTexture()
+  const materials = new Map<string, { core: THREE.MeshBasicMaterial; glow: THREE.SpriteMaterial }>()
+  const materialsFor = (hex: string) => {
+    let m = materials.get(hex)
+    if (!m) {
+      m = {
+        core: new THREE.MeshBasicMaterial({ color: hex }),
+        glow: new THREE.SpriteMaterial({
+          map: texture,
+          color: hex,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      }
+      materials.set(hex, m)
+    }
+    return m
+  }
+  const make = (hex: string) => {
+    const m = materialsFor(hex)
     const group = new THREE.Group()
-    group.add(new THREE.Mesh(core, coreMaterial))
-    const glow = new THREE.Sprite(glowMaterial)
+    group.add(new THREE.Mesh(core, m.core))
+    const glow = new THREE.Sprite(m.glow)
     glow.scale.setScalar(7)
     group.add(glow)
+    // Stashed so the render loop can swap just the glow's material for the blinking attention
+    // colour — and swap it back to the object's own category glow — without touching the core.
+    group.userData.glow = glow
+    group.userData.categoryGlow = m.glow
     return group
   }
   make.dispose = () => {
     core.dispose()
-    coreMaterial.dispose()
-    glowMaterial.map?.dispose()
-    glowMaterial.dispose()
+    texture.dispose()
+    for (const m of materials.values()) {
+      m.core.dispose()
+      m.glow.dispose()
+    }
   }
   return make
 }
 
-function labelElement(object: RSOObject) {
+function labelElement(object: RSOObject, hex: string) {
   const el = document.createElement('div')
   el.className =
-    'pointer-events-none -translate-y-5 whitespace-nowrap rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm'
+    'pointer-events-none -translate-y-5 whitespace-nowrap rounded border-l-2 bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm'
+  el.style.borderLeftColor = hex
   el.textContent = object.name
   return el
 }
@@ -156,6 +206,24 @@ function pairHex(s: MissionState): { id: string; hex: string } | null {
   return threat && rating ? { id: threat.opposedId, hex: SEVERITY_HEX[rating.band] } : null
 }
 
+/**
+ * Both parties of the pair once it's actually close — not the moment it's opened in the UI, but
+ * once its own severity or threat rating has crossed into orange/red. For a conjunction that
+ * tracks real proximity/probability as it evolves; for a threat window it naturally follows once
+ * the chaser is past Burn 1 and closing, since "soon" is one of the rating's own factors.
+ */
+function attentionActive(s: MissionState): string[] {
+  const conj = selectActiveConjunction(s)
+  if (conj) {
+    const band = selectSeverity(s, conj).band
+    return band === 'orange' || band === 'red' ? [conj.primaryId, conj.secondaryId] : []
+  }
+  const threat = selectActiveThreatWindow(s)
+  if (!threat) return []
+  const rating = selectWindowRating(s, threat)
+  return rating && (rating.band === 'orange' || rating.band === 'red') ? [threat.targetId, threat.opposedId] : []
+}
+
 export function GlobeViewport() {
   const containerRef = useRef<HTMLDivElement>(null)
   const globeRef = useRef<GlobeInstance | null>(null)
@@ -165,22 +233,35 @@ export function GlobeViewport() {
     const container = containerRef.current
     if (!container) return
 
-    // Only tracked objects are drawn; data is cached by id so globe.gl keeps each mesh across frames.
+    // Only tracked objects are drawn; data is cached by id so globe.gl keeps each mesh across
+    // frames. A category change (list edit) swaps in a new datum so the mesh is rebuilt.
     const satById = new Map<string, SatDatum>()
-    const trackedSats = (ids: string[]): SatDatum[] =>
-      ids.flatMap((id) => {
+    const trackedSats = (s: MissionState): SatDatum[] =>
+      s.trackedIds.flatMap((id) => {
+        const hex = globeHex(s, id)
         let sat = satById.get(id)
-        if (!sat) {
+        if (!sat || sat.hex !== hex) {
           const object = rsoById.get(id)
           if (!object) return []
-          sat = { id, object, lat: 0, lng: 0, alt: 0 }
+          sat = { id, object, hex, lat: sat?.lat ?? 0, lng: sat?.lng ?? 0, alt: sat?.alt ?? 0 }
           satById.set(id, sat)
+          labels.delete(id)
         }
         return [sat]
       })
     const satMesh = satMeshFactory()
     const labels = new Map<string, HtmlDatum>()
     let plan: { key: string; paths: OverlayPath[]; markers: OverlayMarker[] } | null = null
+
+    // One shared, blinking-red material for every glow currently in "attention" — the core dot
+    // underneath keeps its own owned/allied/opposed colour throughout.
+    const attentionGlowMaterial = new THREE.SpriteMaterial({
+      map: glowTexture(),
+      color: ATTENTION_HEX,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
 
     const globe = new Globe(container, { animateIn: false })
       .backgroundColor('#000000')
@@ -199,7 +280,11 @@ export function GlobeViewport() {
       .objectLng('lng')
       .objectAltitude('alt')
       .objectFacesSurface(false)
-      .objectThreeObject(() => satMesh())
+      .objectThreeObject((d) => {
+        const sat = d as SatDatum
+        sat.mesh = satMesh(sat.hex)
+        return sat.mesh
+      })
       .objectLabel((d) => {
         const { object } = d as SatDatum
         return `<div class="text-[11px] font-medium">${object.name}<br/><span class="font-mono font-normal" style="opacity:.6">NORAD ${object.noradId}</span></div>`
@@ -240,12 +325,13 @@ export function GlobeViewport() {
       for (const id of labels.keys()) if (!ids.includes(id)) labels.delete(id)
       for (const id of ids) {
         const sat = satById.get(id)
-        if (sat && !labels.has(id)) labels.set(id, { id, el: labelElement(sat.object), lat: 0, lng: 0, alt: 0 })
+        if (sat && !labels.has(id)) labels.set(id, { id, el: labelElement(sat.object, sat.hex), lat: 0, lng: 0, alt: 0 })
       }
     }
 
+    // Rings take the object's category colour (or the blinking attention colour once close);
+    // the active pair's rating colour otherwise lives on the approach arc and markers.
     const ringsFor = (s: MissionState, timeMs: number): OverlayPath[] => {
-      const pair = pairHex(s)
       return s.trackedIds.flatMap((id) => {
         const object = rsoById.get(id)
         if (!object) return []
@@ -253,12 +339,7 @@ export function GlobeViewport() {
           {
             id,
             points: orbitRing(effectiveElements(s, object, timeMs), timeMs),
-            color:
-              pair?.id === id
-                ? pair.hex
-                : id === s.selectedRsoId
-                  ? SELECTED_RING_COLOR
-                  : RING_COLOR,
+            color: withAlpha(globeHex(s, id), id === s.selectedRsoId ? 0.95 : 0.7),
             stroke: id === s.selectedRsoId ? 0.9 : 0.6,
             dash: 1,
             gap: 0,
@@ -291,15 +372,39 @@ export function GlobeViewport() {
       headlight.position.copy(globe.camera().position)
       const s = useMissionStore.getState()
       const timeMs = selectDisplayTimeMs(s)
+      const attention = attentionActive(s)
 
-      const sats = trackedSats(s.trackedIds)
+      const sats = trackedSats(s)
       for (const sat of sats) {
         const geo = geoAt(effectiveElements(s, sat.object, timeMs), timeMs)
         sat.lat = geo.lat
         sat.lng = geo.lng
         sat.alt = toAlt(geo.altKm)
       }
+
+      // Deliberately no "nudge apart when close" here: sat.lat/lng also drives labels
+      // (below) and camera-follow, while the orbit ring and approach-arc overlay are
+      // computed independently from these same true elements. Any adjustment applied
+      // only to the marker desyncs the dot from its own ring/arc/label the moment a
+      // conjunction or threat window opens — the object visibly floats off its track.
+      // If two very-close objects need to read as distinct dots, that has to be a
+      // purely visual nudge on the rendered mesh (e.g. sat.mesh.position, after globe.gl
+      // places it) that never touches sat.lat/lng, not a change to the position itself.
       globe.objectsData(sats)
+
+      // A slow, simple dim-bright-dim breathe on the shared attention glow material — the dot
+      // underneath keeps its own owned/allied/opposed colour throughout.
+      const attentionSet = new Set(attention)
+      if (attentionSet.size > 0) {
+        const phase = (now % ATTENTION_PERIOD_MS) / ATTENTION_PERIOD_MS
+        attentionGlowMaterial.opacity = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(phase * Math.PI * 2))
+      }
+      for (const sat of sats) {
+        const glow = sat.mesh?.userData.glow as THREE.Sprite | undefined
+        if (!glow) continue
+        const want = attentionSet.has(sat.id) ? attentionGlowMaterial : (sat.mesh!.userData.categoryGlow as THREE.SpriteMaterial)
+        if (glow.material !== want) glow.material = want
+      }
 
       if (now - lastOverlayAt > OVERLAY_REFRESH_MS) {
         lastOverlayAt = now
@@ -330,6 +435,8 @@ export function GlobeViewport() {
       resize.disconnect()
       globe._destructor()
       satMesh.dispose()
+      attentionGlowMaterial.map?.dispose()
+      attentionGlowMaterial.dispose()
       container.replaceChildren()
       globeRef.current = null
     }
@@ -402,6 +509,7 @@ export function GlobeViewport() {
       <div ref={containerRef} className="absolute inset-0" />
       <GlobeLegend />
       <SurfaceSwitcher surface={surface} onChange={setSurface} />
+      <SpeedControl />
       <button
         type="button"
         onClick={() => globeRef.current?.pointOfView(HOME_VIEW, 1000)}
@@ -410,6 +518,37 @@ export function GlobeViewport() {
         <LocateFixed className="size-3.5" /> Reset view
       </button>
     </section>
+  )
+}
+
+const SPEEDS: SpeedMultiplier[] = [10, 100, 1000]
+
+/** Mission-clock speed picker, moved off the navbar and onto the viewport it actually affects. */
+function SpeedControl() {
+  const speed = useMissionStore((s) => s.speed)
+  const setSpeed = useMissionStore((s) => s.setSpeed)
+  return (
+    <div
+      className="absolute bottom-3 right-3 flex overflow-hidden rounded-lg border border-glass-border bg-glass backdrop-blur-md light:shadow-lg"
+      role="radiogroup"
+      aria-label="Simulation speed"
+    >
+      {SPEEDS.map((s) => (
+        <button
+          key={s}
+          type="button"
+          role="radio"
+          aria-checked={speed === s}
+          onClick={() => setSpeed(s)}
+          className={cn(
+            'px-2.5 py-1.5 font-mono text-xs tabular-nums transition-colors duration-100 ease-out',
+            speed === s ? 'bg-accent-muted text-accent' : 'text-secondary hover:bg-elevated hover:text-primary',
+          )}
+        >
+          {s}x
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -447,9 +586,18 @@ function GlobeLegend() {
     <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-glass-border bg-glass px-3 py-2 backdrop-blur-xl light:shadow-lg">
       <div className="mb-1.5 text-[10px] text-secondary">Earth-fixed · Kepler + J₂</div>
       <div className="flex gap-3 text-[10px] font-medium text-primary">
+        {(Object.keys(CATEGORY_HEX) as RsoListCategory[]).map((c) => (
+          <span key={c} className="flex items-center gap-1.5">
+            <span
+              className="size-2 rounded-full"
+              style={{ backgroundColor: CATEGORY_HEX[c], boxShadow: `0 0 6px 1px ${CATEGORY_HEX[c]}` }}
+            />
+            {CATEGORY_LABEL[c]}
+          </span>
+        ))}
         <span className="flex items-center gap-1.5">
           <span className="size-2 rounded-full bg-white shadow-[0_0_6px_2px_rgba(255,255,255,0.6)] light:shadow-none light:ring-1 light:ring-stone-400" />
-          Tracked RSO
+          Unlisted
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-3 rounded-full bg-[#5b9bd1] light:bg-[#2f6fa8]" />
@@ -458,6 +606,10 @@ function GlobeLegend() {
         <span className="flex items-center gap-1.5">
           <span className="w-3 border-t-2 border-dashed border-sev-red" />
           Intercept
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 animate-pulse rounded-full" style={{ backgroundColor: ATTENTION_HEX }} />
+          Attention
         </span>
       </div>
     </div>

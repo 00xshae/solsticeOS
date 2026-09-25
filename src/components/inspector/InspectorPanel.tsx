@@ -61,13 +61,15 @@ export function InspectorPanel() {
           emptyText="No threat windows. Add it to an owned, allied or opposed list with a counterpart to screen it."
         />
       </Section>
-      <Section title="Threat log">
+      <Section
+        title="Threat log"
+        info="Every recorded rating change for the selected object, or the whole catalogue when nothing is selected. Expand a row to see what changed and why."
+      >
         <ThreatLog objectId={object?.id} />
       </Section>
       <Section
         title={object ? `Conjunction windows · ${objectEvents.length}` : 'Conjunction windows'}
         info="Screened only for owned × opposed pairs. Select a window to inspect its severity."
-        defaultOpen={!threatWindow}
       >
         <ConjunctionList
           events={objectEvents}

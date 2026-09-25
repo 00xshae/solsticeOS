@@ -58,7 +58,10 @@ export function ManeuverEnvelopeEditor({ object }: { object: RSOObject }) {
 
   if (!base || !effective) {
     return (
-      <Section title="Maneuver envelope">
+      <Section
+        title="Maneuver envelope"
+        info="The propulsion budget used to test whether a manoeuvre plan is feasible for this object."
+      >
         <div className="space-y-3 px-3 py-3">
           <p className="flex gap-2 text-[12px] leading-relaxed text-secondary">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-sev-yellow-ink" />
@@ -79,6 +82,7 @@ export function ManeuverEnvelopeEditor({ object }: { object: RSOObject }) {
   return (
     <Section
       title="Maneuver envelope"
+      info="The propulsion budget used to test whether a manoeuvre plan is feasible. Overrides here are local to this session and affect COLA plan feasibility."
       aside={
         overrides && (
           <button

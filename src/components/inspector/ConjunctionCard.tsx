@@ -140,7 +140,7 @@ export function ConjunctionCard({ event }: { event: ConjunctionEvent }) {
   const tcaMs = Date.parse(event.tca)
 
   return (
-    <div className="border-b border-l-2 border-b-border" style={{ borderLeftColor: color }}>
+    <div className="border-b border-b-border">
       <div
         className="flex items-center gap-3 px-3 py-3"
         style={{
@@ -219,10 +219,16 @@ export function ConjunctionCard({ event }: { event: ConjunctionEvent }) {
         {event.reasoning ?? 'No recorded reasoning for this window.'}
       </p>
 
-      <Section title="Severity breakdown">
+      <Section
+        title="Severity breakdown"
+        info="How the Conjunction Severity Index is built: a weighted mean of probability, miss distance and time to closest approach."
+      >
         <SeverityBreakdownView breakdown={breakdown} />
       </Section>
-      <Section title={`Screening history · ${event.assessments.length}`} defaultOpen={false}>
+      <Section
+        title={`Screening history · ${event.assessments.length}`}
+        info="Every recorded assessment of this pair, oldest to newest, with the index at that point in time."
+      >
         <AssessmentHistory event={event} />
       </Section>
     </div>
