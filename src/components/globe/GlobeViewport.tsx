@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { Globe2, LocateFixed, Map as MapIcon, Orbit } from 'lucide-react'
 import { rsoById } from '@/data'
 import { cn } from '@/lib/cn'
-import { SEVERITY_HEX } from '@/lib/format'
+import { CATEGORY_HEX, SEVERITY_HEX } from '@/lib/format'
 import { maneuveredElementsAt } from '@/lib/maneuver'
 import { EARTH_RADIUS_KM, geoAt, orbitRing, type GeoPoint } from '@/lib/orbit'
 import {
@@ -12,6 +12,7 @@ import {
   selectActiveIntercept,
   selectActiveSequence,
   selectActiveThreatWindow,
+  selectCategories,
   selectDisplayTimeMs,
   selectSeverity,
   selectWindowRating,
@@ -25,8 +26,13 @@ import { buildInterceptOverlay, buildPlanOverlay, type OverlayMarker, type Overl
 const HOME_VIEW = { lat: 18, lng: 79, altitude: 2.6 }
 const OVERLAY_REFRESH_MS = 250
 const SAT_HEX = '#ffffff'
-const RING_COLOR = 'rgba(255, 255, 255, 0.7)'
-const SELECTED_RING_COLOR = 'rgba(255, 255, 255, 0.95)'
+const ATTENTION_HEX = '#ff2d2d'
+
+/** `#rrggbb` -> `rgba(r, g, b, alpha)`, so category colours can be reused at ring opacity. */
+function hexToRgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+}
 
 export type GlobeSurface = 'physical' | 'wireframe' | 'political'
 
@@ -75,6 +81,8 @@ interface SatDatum {
   lat: number
   lng: number
   alt: number
+  mesh?: THREE.Group
+  meshHex?: string
 }
 
 /** Anything drawn as an HTML label: object names and plan markers share one layer. */
@@ -98,32 +106,48 @@ function glowTexture() {
   return new THREE.CanvasTexture(canvas)
 }
 
-/** White core plus an additive glow sprite; geometry and materials are shared across objects. */
+/**
+ * White-by-default core plus an additive glow sprite. Geometry and the glow texture are shared,
+ * but each instance gets its own materials (stashed on `group.userData`) so it can be recoloured
+ * per-object — owned/allied/opposed — without touching any other satellite's mesh.
+ */
 function satMeshFactory() {
   const core = new THREE.SphereGeometry(0.9, 12, 8)
-  const coreMaterial = new THREE.MeshBasicMaterial({ color: SAT_HEX })
-  const glowMaterial = new THREE.SpriteMaterial({
-    map: glowTexture(),
-    color: SAT_HEX,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  })
+  const glowTex = glowTexture()
+  const materials: { core: THREE.MeshBasicMaterial; glow: THREE.SpriteMaterial }[] = []
   const make = () => {
+    const coreMaterial = new THREE.MeshBasicMaterial({ color: SAT_HEX })
+    const glowMaterial = new THREE.SpriteMaterial({
+      map: glowTex,
+      color: SAT_HEX,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+    materials.push({ core: coreMaterial, glow: glowMaterial })
     const group = new THREE.Group()
     group.add(new THREE.Mesh(core, coreMaterial))
     const glow = new THREE.Sprite(glowMaterial)
     glow.scale.setScalar(7)
     group.add(glow)
+    group.userData.materials = { core: coreMaterial, glow: glowMaterial }
     return group
   }
   make.dispose = () => {
     core.dispose()
-    coreMaterial.dispose()
-    glowMaterial.map?.dispose()
-    glowMaterial.dispose()
+    glowTex.dispose()
+    for (const m of materials) {
+      m.core.dispose()
+      m.glow.dispose()
+    }
   }
   return make
+}
+
+/** Owned > allied > opposed > neutral white, the same priority `selectCategories` returns. */
+function categoryHex(s: MissionState, id: string): string {
+  const category = selectCategories(s, id)[0]
+  return category ? CATEGORY_HEX[category] : SAT_HEX
 }
 
 function labelElement(object: RSOObject) {
@@ -155,6 +179,14 @@ function pairHex(s: MissionState): { id: string; hex: string } | null {
   const threat = selectActiveThreatWindow(s)
   const rating = threat && selectWindowRating(s, threat)
   return threat && rating ? { id: threat.opposedId, hex: SEVERITY_HEX[rating.band] } : null
+}
+
+/** Both parties of the pair needing attention right now: an open conjunction or threat window. */
+function attentionPairIds(s: MissionState): string[] {
+  const conj = selectActiveConjunction(s)
+  if (conj) return [conj.primaryId, conj.secondaryId]
+  const threat = selectActiveThreatWindow(s)
+  return threat ? [threat.targetId, threat.opposedId] : []
 }
 
 export function GlobeViewport() {
@@ -200,7 +232,11 @@ export function GlobeViewport() {
       .objectLng('lng')
       .objectAltitude('alt')
       .objectFacesSurface(false)
-      .objectThreeObject(() => satMesh())
+      .objectThreeObject((d) => {
+        const sat = d as SatDatum
+        sat.mesh ??= satMesh()
+        return sat.mesh
+      })
       .objectLabel((d) => {
         const { object } = d as SatDatum
         return `<div class="text-[11px] font-medium">${object.name}<br/><span class="font-mono font-normal" style="opacity:.6">NORAD ${object.noradId}</span></div>`
@@ -224,6 +260,15 @@ export function GlobeViewport() {
       .htmlAltitude('alt')
       .htmlElement((d: object) => (d as HtmlDatum).el)
       .htmlTransitionDuration(0)
+      // Blinking red pulse over both objects of an open conjunction or threat window.
+      .ringsData([])
+      .ringLat('lat')
+      .ringLng('lng')
+      .ringAltitude('alt')
+      .ringColor(() => (t: number) => hexToRgba(ATTENTION_HEX, 1 - t))
+      .ringMaxRadius(3.5)
+      .ringPropagationSpeed(2.4)
+      .ringRepeatPeriod(900)
       .pointOfView(HOME_VIEW)
     // Headlight: keep the lit hemisphere facing the viewer wherever the camera orbits.
     const headlight = new THREE.DirectionalLight(0xffffff, 0.9 * Math.PI)
@@ -254,12 +299,9 @@ export function GlobeViewport() {
           {
             id,
             points: orbitRing(effectiveElements(s, object, timeMs), timeMs),
-            color:
-              pair?.id === id
-                ? pair.hex
-                : id === s.selectedRsoId
-                  ? SELECTED_RING_COLOR
-                  : RING_COLOR,
+            // Colour always encodes owned/allied/opposed (or the pair's severity band while
+            // active); a thicker stroke, not a different hue, marks the current selection.
+            color: pair?.id === id ? pair.hex : hexToRgba(categoryHex(s, id), 0.7),
             stroke: id === s.selectedRsoId ? 0.9 : 0.6,
             dash: 1,
             gap: 0,
@@ -299,8 +341,24 @@ export function GlobeViewport() {
         sat.lat = geo.lat
         sat.lng = geo.lng
         sat.alt = toAlt(geo.altKm)
+        const hex = categoryHex(s, sat.id)
+        if (sat.mesh && sat.meshHex !== hex) {
+          const mats = sat.mesh.userData.materials as { core: THREE.MeshBasicMaterial; glow: THREE.SpriteMaterial }
+          mats.core.color.set(hex)
+          mats.glow.color.set(hex)
+          sat.meshHex = hex
+        }
       }
       globe.objectsData(sats)
+
+      // Pulse a red ring over each object of an open conjunction or threat window, every frame
+      // so it tracks the satellites as they move.
+      globe.ringsData(
+        attentionPairIds(s).flatMap((id) => {
+          const sat = satById.get(id)
+          return sat ? [{ id, lat: sat.lat, lng: sat.lng, alt: sat.alt }] : []
+        }),
+      )
 
       if (now - lastOverlayAt > OVERLAY_REFRESH_MS) {
         lastOverlayAt = now
@@ -479,10 +537,18 @@ function GlobeLegend() {
   return (
     <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-glass-border bg-glass px-3 py-2 backdrop-blur-xl light:shadow-lg">
       <div className="mb-1.5 text-[10px] text-secondary">Earth-fixed · Kepler + J₂</div>
-      <div className="flex gap-3 text-[10px] font-medium text-primary">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium text-primary">
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-white shadow-[0_0_6px_2px_rgba(255,255,255,0.6)] light:shadow-none light:ring-1 light:ring-stone-400" />
-          Tracked RSO
+          <span className="size-2 rounded-full" style={{ backgroundColor: CATEGORY_HEX.owned }} />
+          Owned
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full" style={{ backgroundColor: CATEGORY_HEX.allied }} />
+          Allied
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full" style={{ backgroundColor: CATEGORY_HEX.opposed }} />
+          Opposed
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-3 rounded-full bg-[#5b9bd1] light:bg-[#2f6fa8]" />
@@ -491,6 +557,10 @@ function GlobeLegend() {
         <span className="flex items-center gap-1.5">
           <span className="w-3 border-t-2 border-dashed border-sev-red" />
           Intercept
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 animate-pulse rounded-full" style={{ backgroundColor: ATTENTION_HEX }} />
+          Attention
         </span>
       </div>
     </div>
