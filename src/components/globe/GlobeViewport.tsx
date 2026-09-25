@@ -31,11 +31,9 @@ const UNLISTED_HEX = '#ffffff'
 const ATTENTION_HEX = '#ff2d2d'
 /** One full dim-to-bright-to-dim cycle, in milliseconds. */
 const ATTENTION_PERIOD_MS = 1600
-/** Degrees each side of the true midpoint the pair is nudged apart, once alerting, so they
- *  read as two objects instead of one dot even as their real separation collapses toward zero. */
-const ATTENTION_SEPARATION_DEG = 0.35
-/** One full swirl around the shared midpoint, in milliseconds. */
-const ATTENTION_ORBIT_PERIOD_MS = 3200
+/** Floor on the pair's rendered separation, once alerting: never let them render as one dot,
+ *  but never touch their true position otherwise — real mechanics, just with a minimum. */
+const ATTENTION_MIN_SEPARATION_DEG = 1
 
 /** Owned wins over allied over opposed. The dot itself never changes colour for attention —
  *  only its glow does, see the render loop below. */
@@ -380,21 +378,27 @@ export function GlobeViewport() {
         sat.alt = toAlt(geo.altKm)
       }
 
-      // Once alerting, nudge the pair apart around their true midpoint — real conjunction
-      // separations are metres, far smaller than a dot's own on-screen size, so without this
-      // they'd render as a single point instead of two distinct, orbiting dots.
+      // Each object still flies its own real elements above — this only claps a floor on how
+      // close the pair is allowed to render once alerting, real conjunction separations being
+      // metres, far smaller than a dot's own on-screen size. It pads outward from their true
+      // midpoint along their true bearing (so which one is "ahead" still reflects the real
+      // geometry) and does nothing at all once they're naturally farther apart than the floor.
       if (attention.length === 2) {
         const [a, b] = attention.map((id) => satById.get(id))
         if (a && b) {
-          const midLat = (a.lat + b.lat) / 2
-          const midLng = (a.lng + b.lng) / 2
-          const theta = ((now % ATTENTION_ORBIT_PERIOD_MS) / ATTENTION_ORBIT_PERIOD_MS) * Math.PI * 2
-          const dLat = ATTENTION_SEPARATION_DEG * Math.sin(theta)
-          const dLng = ATTENTION_SEPARATION_DEG * Math.cos(theta)
-          a.lat = midLat + dLat
-          a.lng = midLng + dLng
-          b.lat = midLat - dLat
-          b.lng = midLng - dLng
+          const rawDLat = b.lat - a.lat
+          const rawDLng = b.lng - a.lng
+          const dist = Math.hypot(rawDLat, rawDLng)
+          if (dist < ATTENTION_MIN_SEPARATION_DEG) {
+            const [ux, uy] = dist > 1e-6 ? [rawDLat / dist, rawDLng / dist] : [1, 0]
+            const midLat = (a.lat + b.lat) / 2
+            const midLng = (a.lng + b.lng) / 2
+            const half = ATTENTION_MIN_SEPARATION_DEG / 2
+            a.lat = midLat - ux * half
+            a.lng = midLng - uy * half
+            b.lat = midLat + ux * half
+            b.lng = midLng + uy * half
+          }
         }
       }
       globe.objectsData(sats)
