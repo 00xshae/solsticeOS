@@ -7,6 +7,7 @@ import { Header } from '@/components/layout/Header'
 import { GlobeViewport } from '@/components/globe/GlobeViewport'
 import { InspectorPanel } from '@/components/inspector/InspectorPanel'
 import { RsoListsPage } from '@/components/lists/RsoListsPage'
+import { ResponsePage } from '@/components/response/ResponsePage'
 import { TimelineDock } from '@/components/timeline/TimelineDock'
 import { LoginPage } from '@/components/auth/LoginPage'
 import { useMissionClock } from '@/hooks/useMissionClock'
@@ -24,6 +25,11 @@ function MissionConsole() {
         {view === 'lists' && (
           <div className="absolute inset-0 z-20">
             <RsoListsPage />
+          </div>
+        )}
+        {view === 'response' && (
+          <div className="absolute inset-0 z-20">
+            <ResponsePage />
           </div>
         )}
         <CatalogSidebar />
