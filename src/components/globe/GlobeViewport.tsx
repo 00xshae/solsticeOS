@@ -31,10 +31,15 @@ const UNLISTED_HEX = '#ffffff'
 const ATTENTION_HEX = '#ff2d2d'
 /** One full dim-to-bright-to-dim cycle, in milliseconds. */
 const ATTENTION_PERIOD_MS = 1600
+/** Degrees each side of the true midpoint the pair is nudged apart, once alerting, so they
+ *  read as two objects instead of one dot even as their real separation collapses toward zero. */
+const ATTENTION_SEPARATION_DEG = 0.35
+/** One full swirl around the shared midpoint, in milliseconds. */
+const ATTENTION_ORBIT_PERIOD_MS = 3200
 
-/** Owned wins over allied over opposed; attention (close pair) wins over category. */
-const globeHex = (s: MissionState, id: string, attention: Set<string>) => {
-  if (attention.has(id)) return ATTENTION_HEX
+/** Owned wins over allied over opposed. The dot itself never changes colour for attention —
+ *  only its glow does, see the render loop below. */
+const globeHex = (s: MissionState, id: string) => {
   const [category] = selectCategories(s, id)
   return category ? CATEGORY_HEX[category] : UNLISTED_HEX
 }
@@ -90,6 +95,8 @@ interface SatDatum {
   object: RSOObject
   /** Category colour the mesh was built with; a new datum replaces this one when it changes. */
   hex: string
+  /** Stashed on first objectThreeObject call so the render loop can reach its glow sprite. */
+  mesh?: THREE.Group
   lat: number
   lng: number
   alt: number
@@ -148,6 +155,10 @@ function satMeshFactory() {
     const glow = new THREE.Sprite(m.glow)
     glow.scale.setScalar(7)
     group.add(glow)
+    // Stashed so the render loop can swap just the glow's material for the blinking attention
+    // colour — and swap it back to the object's own category glow — without touching the core.
+    group.userData.glow = glow
+    group.userData.categoryGlow = m.glow
     return group
   }
   make.dispose = () => {
@@ -158,9 +169,6 @@ function satMeshFactory() {
       m.glow.dispose()
     }
   }
-  // Exposed so the render loop can grab the exact materials an "attention" mesh is using and
-  // breathe their brightness/opacity, instead of maintaining a second, parallel colour path.
-  make.materialsFor = materialsFor
   return make
 }
 
@@ -226,9 +234,9 @@ export function GlobeViewport() {
     // Only tracked objects are drawn; data is cached by id so globe.gl keeps each mesh across
     // frames. A category change (list edit) swaps in a new datum so the mesh is rebuilt.
     const satById = new Map<string, SatDatum>()
-    const trackedSats = (s: MissionState, attention: Set<string>): SatDatum[] =>
+    const trackedSats = (s: MissionState): SatDatum[] =>
       s.trackedIds.flatMap((id) => {
-        const hex = globeHex(s, id, attention)
+        const hex = globeHex(s, id)
         let sat = satById.get(id)
         if (!sat || sat.hex !== hex) {
           const object = rsoById.get(id)
@@ -242,6 +250,16 @@ export function GlobeViewport() {
     const satMesh = satMeshFactory()
     const labels = new Map<string, HtmlDatum>()
     let plan: { key: string; paths: OverlayPath[]; markers: OverlayMarker[] } | null = null
+
+    // One shared, blinking-red material for every glow currently in "attention" — the core dot
+    // underneath keeps its own owned/allied/opposed colour throughout.
+    const attentionGlowMaterial = new THREE.SpriteMaterial({
+      map: glowTexture(),
+      color: ATTENTION_HEX,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
 
     const globe = new Globe(container, { animateIn: false })
       .backgroundColor('#000000')
@@ -260,7 +278,11 @@ export function GlobeViewport() {
       .objectLng('lng')
       .objectAltitude('alt')
       .objectFacesSurface(false)
-      .objectThreeObject((d) => satMesh((d as SatDatum).hex))
+      .objectThreeObject((d) => {
+        const sat = d as SatDatum
+        sat.mesh = satMesh(sat.hex)
+        return sat.mesh
+      })
       .objectLabel((d) => {
         const { object } = d as SatDatum
         return `<div class="text-[11px] font-medium">${object.name}<br/><span class="font-mono font-normal" style="opacity:.6">NORAD ${object.noradId}</span></div>`
@@ -307,7 +329,7 @@ export function GlobeViewport() {
 
     // Rings take the object's category colour (or the blinking attention colour once close);
     // the active pair's rating colour otherwise lives on the approach arc and markers.
-    const ringsFor = (s: MissionState, timeMs: number, attention: Set<string>): OverlayPath[] => {
+    const ringsFor = (s: MissionState, timeMs: number): OverlayPath[] => {
       return s.trackedIds.flatMap((id) => {
         const object = rsoById.get(id)
         if (!object) return []
@@ -315,7 +337,7 @@ export function GlobeViewport() {
           {
             id,
             points: orbitRing(effectiveElements(s, object, timeMs), timeMs),
-            color: withAlpha(globeHex(s, id, attention), id === s.selectedRsoId ? 0.95 : 0.7),
+            color: withAlpha(globeHex(s, id), id === s.selectedRsoId ? 0.95 : 0.7),
             stroke: id === s.selectedRsoId ? 0.9 : 0.6,
             dash: 1,
             gap: 0,
@@ -348,32 +370,54 @@ export function GlobeViewport() {
       headlight.position.copy(globe.camera().position)
       const s = useMissionStore.getState()
       const timeMs = selectDisplayTimeMs(s)
-      const attention = new Set(attentionActive(s))
+      const attention = attentionActive(s)
 
-      const sats = trackedSats(s, attention)
+      const sats = trackedSats(s)
       for (const sat of sats) {
         const geo = geoAt(effectiveElements(s, sat.object, timeMs), timeMs)
         sat.lat = geo.lat
         sat.lng = geo.lng
         sat.alt = toAlt(geo.altKm)
       }
+
+      // Once alerting, nudge the pair apart around their true midpoint — real conjunction
+      // separations are metres, far smaller than a dot's own on-screen size, so without this
+      // they'd render as a single point instead of two distinct, orbiting dots.
+      if (attention.length === 2) {
+        const [a, b] = attention.map((id) => satById.get(id))
+        if (a && b) {
+          const midLat = (a.lat + b.lat) / 2
+          const midLng = (a.lng + b.lng) / 2
+          const theta = ((now % ATTENTION_ORBIT_PERIOD_MS) / ATTENTION_ORBIT_PERIOD_MS) * Math.PI * 2
+          const dLat = ATTENTION_SEPARATION_DEG * Math.sin(theta)
+          const dLng = ATTENTION_SEPARATION_DEG * Math.cos(theta)
+          a.lat = midLat + dLat
+          a.lng = midLng + dLng
+          b.lat = midLat - dLat
+          b.lng = midLng - dLng
+        }
+      }
       globe.objectsData(sats)
 
-      // A slow, simple dim-bright-dim breathing on the shared "attention" materials — not an
-      // expanding ring, just the object's own glow pulsing once the pair is actually close.
-      if (attention.size > 0) {
+      // A slow, simple dim-bright-dim breathe on the shared attention glow material — the dot
+      // underneath keeps its own owned/allied/opposed colour throughout.
+      const attentionSet = new Set(attention)
+      if (attentionSet.size > 0) {
         const phase = (now % ATTENTION_PERIOD_MS) / ATTENTION_PERIOD_MS
-        const pulse = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(phase * Math.PI * 2))
-        const mats = satMesh.materialsFor(ATTENTION_HEX)
-        mats.core.color.set(ATTENTION_HEX).multiplyScalar(pulse)
-        mats.glow.opacity = pulse
+        attentionGlowMaterial.opacity = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(phase * Math.PI * 2))
+      }
+      for (const sat of sats) {
+        const glow = sat.mesh?.userData.glow as THREE.Sprite | undefined
+        if (!glow) continue
+        const want = attentionSet.has(sat.id) ? attentionGlowMaterial : (sat.mesh!.userData.categoryGlow as THREE.SpriteMaterial)
+        if (glow.material !== want) glow.material = want
       }
 
       if (now - lastOverlayAt > OVERLAY_REFRESH_MS) {
         lastOverlayAt = now
         syncLabels(s.trackedIds)
         syncPlan(s)
-        rings = ringsFor(s, timeMs, attention)
+        rings = ringsFor(s, timeMs)
         globe.pathsData([...rings, ...(plan?.paths ?? [])])
       }
       for (const label of labels.values()) {
@@ -398,6 +442,8 @@ export function GlobeViewport() {
       resize.disconnect()
       globe._destructor()
       satMesh.dispose()
+      attentionGlowMaterial.map?.dispose()
+      attentionGlowMaterial.dispose()
       container.replaceChildren()
       globeRef.current = null
     }
