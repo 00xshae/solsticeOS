@@ -31,13 +31,17 @@ const UNLISTED_HEX = '#ffffff'
 const ATTENTION_HEX = '#ff2d2d'
 /** One full dim-to-bright-to-dim cycle, in milliseconds. */
 const ATTENTION_PERIOD_MS = 1600
-/** Floor on the pair's rendered separation, once alerting: never let them render as one dot,
- *  but never touch their true position otherwise — real mechanics, just with a minimum. */
-const ATTENTION_MIN_SEPARATION_DEG = 1
+
+/** Pinned for the threat-window demo pair, regardless of list membership. */
+const NAMED_HEX: Record<string, string> = {
+  'CARTOSAT-3': CATEGORY_HEX.owned,
+  'INSP-1': CATEGORY_HEX.opposed,
+}
 
 /** Owned wins over allied over opposed. The dot itself never changes colour for attention —
  *  only its glow does, see the render loop below. */
 const globeHex = (s: MissionState, id: string) => {
+  if (NAMED_HEX[id]) return NAMED_HEX[id]
   const [category] = selectCategories(s, id)
   return category ? CATEGORY_HEX[category] : UNLISTED_HEX
 }
@@ -378,29 +382,14 @@ export function GlobeViewport() {
         sat.alt = toAlt(geo.altKm)
       }
 
-      // Each object still flies its own real elements above — this only claps a floor on how
-      // close the pair is allowed to render once alerting, real conjunction separations being
-      // metres, far smaller than a dot's own on-screen size. It pads outward from their true
-      // midpoint along their true bearing (so which one is "ahead" still reflects the real
-      // geometry) and does nothing at all once they're naturally farther apart than the floor.
-      if (attention.length === 2) {
-        const [a, b] = attention.map((id) => satById.get(id))
-        if (a && b) {
-          const rawDLat = b.lat - a.lat
-          const rawDLng = b.lng - a.lng
-          const dist = Math.hypot(rawDLat, rawDLng)
-          if (dist < ATTENTION_MIN_SEPARATION_DEG) {
-            const [ux, uy] = dist > 1e-6 ? [rawDLat / dist, rawDLng / dist] : [1, 0]
-            const midLat = (a.lat + b.lat) / 2
-            const midLng = (a.lng + b.lng) / 2
-            const half = ATTENTION_MIN_SEPARATION_DEG / 2
-            a.lat = midLat - ux * half
-            a.lng = midLng - uy * half
-            b.lat = midLat + ux * half
-            b.lng = midLng + uy * half
-          }
-        }
-      }
+      // Deliberately no "nudge apart when close" here: sat.lat/lng also drives labels
+      // (below) and camera-follow, while the orbit ring and approach-arc overlay are
+      // computed independently from these same true elements. Any adjustment applied
+      // only to the marker desyncs the dot from its own ring/arc/label the moment a
+      // conjunction or threat window opens — the object visibly floats off its track.
+      // If two very-close objects need to read as distinct dots, that has to be a
+      // purely visual nudge on the rendered mesh (e.g. sat.mesh.position, after globe.gl
+      // places it) that never touches sat.lat/lng, not a change to the position itself.
       globe.objectsData(sats)
 
       // A slow, simple dim-bright-dim breathe on the shared attention glow material — the dot
