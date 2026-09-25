@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { Globe2, LocateFixed, Map as MapIcon, Orbit } from 'lucide-react'
 import { rsoById } from '@/data'
 import { cn } from '@/lib/cn'
-import { CATEGORY_HEX, SEVERITY_HEX } from '@/lib/format'
+import { CATEGORY_HEX, CATEGORY_LABEL, SEVERITY_HEX } from '@/lib/format'
 import { maneuveredElementsAt } from '@/lib/maneuver'
 import { EARTH_RADIUS_KM, geoAt, orbitRing, type GeoPoint } from '@/lib/orbit'
 import {
@@ -20,17 +20,22 @@ import {
   type MissionState,
   type SpeedMultiplier,
 } from '@/store/missionStore'
-import type { OrbitalElements, RSOObject } from '@/types'
+import type { OrbitalElements, RSOObject, RsoListCategory } from '@/types'
 import { buildInterceptOverlay, buildPlanOverlay, type OverlayMarker, type OverlayPath } from './planOverlay'
 
 const HOME_VIEW = { lat: 18, lng: 79, altitude: 2.6 }
 const OVERLAY_REFRESH_MS = 250
-const SAT_HEX = '#ffffff'
-const ATTENTION_HEX = '#ff2d2d'
+/** Objects on no list stay neutral white; listed ones take their category colour. */
+const UNLISTED_HEX = '#ffffff'
 
-/** `#rrggbb` -> `rgba(r, g, b, alpha)`, so category colours can be reused at ring opacity. */
-function hexToRgba(hex: string, alpha: number): string {
-  const n = parseInt(hex.slice(1), 16)
+/** Owned wins over allied over opposed, matching the order categories are listed in. */
+const globeHex = (s: MissionState, id: string) => {
+  const [category] = selectCategories(s, id)
+  return category ? CATEGORY_HEX[category] : UNLISTED_HEX
+}
+
+const withAlpha = (hex: string, alpha: number) => {
+  const n = Number.parseInt(hex.slice(1), 16)
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
 }
 
@@ -78,11 +83,11 @@ function countryColor(feature: object) {
 interface SatDatum {
   id: string
   object: RSOObject
+  /** Category colour the mesh was built with; a new datum replaces this one when it changes. */
+  hex: string
   lat: number
   lng: number
   alt: number
-  mesh?: THREE.Group
-  meshHex?: string
 }
 
 /** Anything drawn as an HTML label: object names and plan markers share one layer. */
@@ -107,36 +112,43 @@ function glowTexture() {
 }
 
 /**
- * White-by-default core plus an additive glow sprite. Geometry and the glow texture are shared,
- * but each instance gets its own materials (stashed on `group.userData`) so it can be recoloured
- * per-object — owned/allied/opposed — without touching any other satellite's mesh.
+ * Coloured core plus an additive glow sprite. Geometry and the glow texture are shared; the
+ * materials are cached per colour, so objects in the same category share them too.
  */
 function satMeshFactory() {
   const core = new THREE.SphereGeometry(0.9, 12, 8)
-  const glowTex = glowTexture()
-  const materials: { core: THREE.MeshBasicMaterial; glow: THREE.SpriteMaterial }[] = []
-  const make = () => {
-    const coreMaterial = new THREE.MeshBasicMaterial({ color: SAT_HEX })
-    const glowMaterial = new THREE.SpriteMaterial({
-      map: glowTex,
-      color: SAT_HEX,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    })
-    materials.push({ core: coreMaterial, glow: glowMaterial })
+  const texture = glowTexture()
+  const materials = new Map<string, { core: THREE.MeshBasicMaterial; glow: THREE.SpriteMaterial }>()
+  const materialsFor = (hex: string) => {
+    let m = materials.get(hex)
+    if (!m) {
+      m = {
+        core: new THREE.MeshBasicMaterial({ color: hex }),
+        glow: new THREE.SpriteMaterial({
+          map: texture,
+          color: hex,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        }),
+      }
+      materials.set(hex, m)
+    }
+    return m
+  }
+  const make = (hex: string) => {
+    const m = materialsFor(hex)
     const group = new THREE.Group()
-    group.add(new THREE.Mesh(core, coreMaterial))
-    const glow = new THREE.Sprite(glowMaterial)
+    group.add(new THREE.Mesh(core, m.core))
+    const glow = new THREE.Sprite(m.glow)
     glow.scale.setScalar(7)
     group.add(glow)
-    group.userData.materials = { core: coreMaterial, glow: glowMaterial }
     return group
   }
   make.dispose = () => {
     core.dispose()
-    glowTex.dispose()
-    for (const m of materials) {
+    texture.dispose()
+    for (const m of materials.values()) {
       m.core.dispose()
       m.glow.dispose()
     }
@@ -144,16 +156,11 @@ function satMeshFactory() {
   return make
 }
 
-/** Owned > allied > opposed > neutral white, the same priority `selectCategories` returns. */
-function categoryHex(s: MissionState, id: string): string {
-  const category = selectCategories(s, id)[0]
-  return category ? CATEGORY_HEX[category] : SAT_HEX
-}
-
-function labelElement(object: RSOObject) {
+function labelElement(object: RSOObject, hex: string) {
   const el = document.createElement('div')
   el.className =
-    'pointer-events-none -translate-y-5 whitespace-nowrap rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm'
+    'pointer-events-none -translate-y-5 whitespace-nowrap rounded border-l-2 bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm'
+  el.style.borderLeftColor = hex
   el.textContent = object.name
   return el
 }
@@ -181,6 +188,8 @@ function pairHex(s: MissionState): { id: string; hex: string } | null {
   return threat && rating ? { id: threat.opposedId, hex: SEVERITY_HEX[rating.band] } : null
 }
 
+const ATTENTION_HEX = '#ff2d2d'
+
 /** Both parties of the pair needing attention right now: an open conjunction or threat window. */
 function attentionPairIds(s: MissionState): string[] {
   const conj = selectActiveConjunction(s)
@@ -198,16 +207,19 @@ export function GlobeViewport() {
     const container = containerRef.current
     if (!container) return
 
-    // Only tracked objects are drawn; data is cached by id so globe.gl keeps each mesh across frames.
+    // Only tracked objects are drawn; data is cached by id so globe.gl keeps each mesh across
+    // frames. A category change (list edit) swaps in a new datum so the mesh is rebuilt.
     const satById = new Map<string, SatDatum>()
-    const trackedSats = (ids: string[]): SatDatum[] =>
-      ids.flatMap((id) => {
+    const trackedSats = (s: MissionState): SatDatum[] =>
+      s.trackedIds.flatMap((id) => {
+        const hex = globeHex(s, id)
         let sat = satById.get(id)
-        if (!sat) {
+        if (!sat || sat.hex !== hex) {
           const object = rsoById.get(id)
           if (!object) return []
-          sat = { id, object, lat: 0, lng: 0, alt: 0 }
+          sat = { id, object, hex, lat: sat?.lat ?? 0, lng: sat?.lng ?? 0, alt: sat?.alt ?? 0 }
           satById.set(id, sat)
+          labels.delete(id)
         }
         return [sat]
       })
@@ -232,11 +244,7 @@ export function GlobeViewport() {
       .objectLng('lng')
       .objectAltitude('alt')
       .objectFacesSurface(false)
-      .objectThreeObject((d) => {
-        const sat = d as SatDatum
-        sat.mesh ??= satMesh()
-        return sat.mesh
-      })
+      .objectThreeObject((d) => satMesh((d as SatDatum).hex))
       .objectLabel((d) => {
         const { object } = d as SatDatum
         return `<div class="text-[11px] font-medium">${object.name}<br/><span class="font-mono font-normal" style="opacity:.6">NORAD ${object.noradId}</span></div>`
@@ -265,7 +273,7 @@ export function GlobeViewport() {
       .ringLat('lat')
       .ringLng('lng')
       .ringAltitude('alt')
-      .ringColor(() => (t: number) => hexToRgba(ATTENTION_HEX, 1 - t))
+      .ringColor(() => (t: number) => withAlpha(ATTENTION_HEX, 1 - t))
       .ringMaxRadius(3.5)
       .ringPropagationSpeed(2.4)
       .ringRepeatPeriod(900)
@@ -286,12 +294,13 @@ export function GlobeViewport() {
       for (const id of labels.keys()) if (!ids.includes(id)) labels.delete(id)
       for (const id of ids) {
         const sat = satById.get(id)
-        if (sat && !labels.has(id)) labels.set(id, { id, el: labelElement(sat.object), lat: 0, lng: 0, alt: 0 })
+        if (sat && !labels.has(id)) labels.set(id, { id, el: labelElement(sat.object, sat.hex), lat: 0, lng: 0, alt: 0 })
       }
     }
 
+    // Rings take the object's category colour; the active pair's rating colour lives on the
+    // approach arc and markers instead, so an opposed ring always reads red.
     const ringsFor = (s: MissionState, timeMs: number): OverlayPath[] => {
-      const pair = pairHex(s)
       return s.trackedIds.flatMap((id) => {
         const object = rsoById.get(id)
         if (!object) return []
@@ -299,9 +308,7 @@ export function GlobeViewport() {
           {
             id,
             points: orbitRing(effectiveElements(s, object, timeMs), timeMs),
-            // Colour always encodes owned/allied/opposed (or the pair's severity band while
-            // active); a thicker stroke, not a different hue, marks the current selection.
-            color: pair?.id === id ? pair.hex : hexToRgba(categoryHex(s, id), 0.7),
+            color: withAlpha(globeHex(s, id), id === s.selectedRsoId ? 0.95 : 0.7),
             stroke: id === s.selectedRsoId ? 0.9 : 0.6,
             dash: 1,
             gap: 0,
@@ -335,19 +342,12 @@ export function GlobeViewport() {
       const s = useMissionStore.getState()
       const timeMs = selectDisplayTimeMs(s)
 
-      const sats = trackedSats(s.trackedIds)
+      const sats = trackedSats(s)
       for (const sat of sats) {
         const geo = geoAt(effectiveElements(s, sat.object, timeMs), timeMs)
         sat.lat = geo.lat
         sat.lng = geo.lng
         sat.alt = toAlt(geo.altKm)
-        const hex = categoryHex(s, sat.id)
-        if (sat.mesh && sat.meshHex !== hex) {
-          const mats = sat.mesh.userData.materials as { core: THREE.MeshBasicMaterial; glow: THREE.SpriteMaterial }
-          mats.core.color.set(hex)
-          mats.glow.color.set(hex)
-          sat.meshHex = hex
-        }
       }
       globe.objectsData(sats)
 
@@ -537,18 +537,19 @@ function GlobeLegend() {
   return (
     <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-glass-border bg-glass px-3 py-2 backdrop-blur-xl light:shadow-lg">
       <div className="mb-1.5 text-[10px] text-secondary">Earth-fixed · Kepler + J₂</div>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium text-primary">
+      <div className="flex gap-3 text-[10px] font-medium text-primary">
+        {(Object.keys(CATEGORY_HEX) as RsoListCategory[]).map((c) => (
+          <span key={c} className="flex items-center gap-1.5">
+            <span
+              className="size-2 rounded-full"
+              style={{ backgroundColor: CATEGORY_HEX[c], boxShadow: `0 0 6px 1px ${CATEGORY_HEX[c]}` }}
+            />
+            {CATEGORY_LABEL[c]}
+          </span>
+        ))}
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full" style={{ backgroundColor: CATEGORY_HEX.owned }} />
-          Owned
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full" style={{ backgroundColor: CATEGORY_HEX.allied }} />
-          Allied
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full" style={{ backgroundColor: CATEGORY_HEX.opposed }} />
-          Opposed
+          <span className="size-2 rounded-full bg-white shadow-[0_0_6px_2px_rgba(255,255,255,0.6)] light:shadow-none light:ring-1 light:ring-stone-400" />
+          Unlisted
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-0.5 w-3 rounded-full bg-[#5b9bd1] light:bg-[#2f6fa8]" />
