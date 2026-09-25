@@ -4,15 +4,10 @@ export function LoginPage() {
   return (
     <div className="grid h-full place-items-center bg-base">
       <div className="flex flex-col items-center gap-8">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="glow size-2 rounded-full bg-accent [--glow:var(--color-accent)]" aria-hidden />
-            <div className="font-display text-3xl leading-none tracking-wide text-primary [font-variant-caps:small-caps]">
-              orbital rakshak
-            </div>
-          </div>
-          <div className="text-xs font-medium uppercase tracking-[0.2em] text-tertiary">
-            IN-SPACe STM Platform
+        <div className="flex items-center gap-2.5">
+          <span className="glow size-2 rounded-full bg-accent [--glow:var(--color-accent)]" aria-hidden />
+          <div className="font-display text-3xl leading-none tracking-wide text-primary [font-variant-caps:small-caps]">
+            orbital rakshak
           </div>
         </div>
 
