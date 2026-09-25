@@ -47,7 +47,7 @@ import type {
 
 export type SpeedMultiplier = 10 | 100 | 1000
 export type ColaStatus = 'PLANNING' | 'COMMITTED'
-export type AppView = 'globe' | 'lists'
+export type AppView = 'globe' | 'lists' | 'response'
 
 /** What the Threat Rating dialog explains: one window, or one object's aggregate. */
 export type RatingModalTarget = { kind: 'window'; windowId: string } | { kind: 'object'; objectId: string; role: ThreatRole }
